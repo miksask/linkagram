@@ -11,10 +11,13 @@ Runnable Android/Compose app with:
 - URL validation and normalization (Spec 001)
 - Manual HTTP redirect resolution with chain display (Spec 002)
 - Map URL parsing for Google, Yandex, OSM, Apple, and generic coordinates (Spec 003)
-- One-tap copy of coordinates as `lat, lon`
+- One-tap copy of coordinates as `lat, lon` (Spec 005)
 - Unit tests and GitHub Actions CI (`test`, `lint`, `assembleDebug`)
+- Release workflow publishing an APK to GitHub Releases on a `v*` tag
 
 Application id / namespace: `io.github.miksask.linkagram`
+
+Minimum Android version 8.0 (API 26); compiled and targeted against API 37.
 
 ## Why this project exists
 
@@ -50,16 +53,27 @@ Debug APK output:
 
 `app/build/outputs/apk/debug/app-debug.apk`
 
+Contribution setup and conventions: [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Releases
+
+Pushing a `v*` tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml),
+which runs the checks, builds the release APK, and attaches it to a GitHub
+Release. Signing uses repository secrets when they are configured; without them
+the workflow still publishes an unsigned APK, which has to be installed
+manually.
+
 ## Engineering approach
 
 - Specs: `docs/specs/`
+- Architecture: `docs/architecture.md`
 - Architecture decisions: `docs/decisions/`
 - Documentation index: `docs/README.md`
 - AI agent instructions: `AGENTS.md`
 - Cursor rules: `.cursor/rules/`
 - Agent skills: `.agents/skills/`
 - CI: GitHub Actions
-- APKs: GitHub Releases (release workflow still to add)
+- APKs: GitHub Releases
 
 ## Cursor / AI workflow
 
@@ -73,9 +87,20 @@ Debug APK output:
 5. Run `./gradlew test`, `./gradlew lint`, and `./gradlew assembleDebug` when
    changing application code.
 
+## Privacy
+
+No backend, no accounts, no analytics, no database. The only network traffic is
+the resolution of the URL you supply. The clipboard is read only when you tap
+paste. Nothing is persisted between runs.
+
+Cleartext `http://` is allowed on purpose so plain http links can be inspected
+instead of failing; TLS validation for https is untouched. See
+[ADR-004](docs/decisions/ADR-004-privacy-and-networking.md).
+
 ## Current limitations
 
 - JavaScript-only redirects are not followed (no WebView)
 - Map metadata depends on stable URL structure, not page scraping
 - Not every provider URL variant is covered yet
 - No persistent link history in MVP
+- Release builds are not minified, and are unsigned unless CI secrets are set

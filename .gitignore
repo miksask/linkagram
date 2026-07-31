@@ -15,6 +15,9 @@ gen/
 out/
 build/
 
+# Local environment
+.env-vars.local
+
 # Gradle
 .gradle/
 local.properties

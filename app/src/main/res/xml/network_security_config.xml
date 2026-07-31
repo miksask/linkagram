@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Linkagram analyses URLs supplied by the user, including plain http:// links.
+  Cleartext is permitted so those links resolve instead of failing as network
+  errors. TLS validation stays at platform defaults: system trust anchors only,
+  no user-installed CAs, no debug overrides. See ADR-004.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

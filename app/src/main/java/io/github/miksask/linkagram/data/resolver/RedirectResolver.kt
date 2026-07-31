@@ -2,18 +2,27 @@ package io.github.miksask.linkagram.data.resolver
 
 import io.github.miksask.linkagram.domain.RedirectStep
 import io.github.miksask.linkagram.domain.ResolveResult
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import java.io.IOException
-import java.net.SocketTimeoutException
+import java.io.InterruptedIOException
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class RedirectResolver(
     private val client: OkHttpClient = defaultClient(),
     private val maxRedirects: Int = DEFAULT_MAX_REDIRECTS,
 ) {
-    fun resolve(url: String): ResolveResult {
+    suspend fun resolve(url: String): ResolveResult {
         val trimmed = url.trim()
         val explicitScheme = SCHEME_REGEX.find(trimmed)?.groupValues?.get(1)?.lowercase()
         if (explicitScheme != null && explicitScheme != "http" && explicitScheme != "https") {
@@ -32,6 +41,8 @@ class RedirectResolver(
         var current = startUrl
 
         repeat(maxRedirects + 1) { hopIndex ->
+            coroutineContext.ensureActive()
+
             val currentString = current.toString()
             if (!visited.add(currentString)) {
                 return ResolveResult.RedirectLoop(chain.toList())
@@ -48,7 +59,7 @@ class RedirectResolver(
                 .build()
 
             try {
-                client.newCall(request).execute().use { response ->
+                client.newCall(request).await().use { response ->
                     val code = response.code
                     if (code in REDIRECT_CODES) {
                         val location = response.header("Location")
@@ -85,7 +96,10 @@ class RedirectResolver(
                         redirectChain = chain.toList(),
                     )
                 }
-            } catch (_: SocketTimeoutException) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: InterruptedIOException) {
+                // Covers socket read/connect timeouts and the OkHttp call timeout.
                 return ResolveResult.Timeout
             } catch (e: IOException) {
                 return ResolveResult.NetworkError(e.message)
@@ -141,5 +155,22 @@ class RedirectResolver(
             if (!trimmed.contains("://")) return false
             return trimmed.toHttpUrlOrNull() == null
         }
+
+        private suspend fun Call.await(): Response =
+            suspendCancellableCoroutine { continuation ->
+                continuation.invokeOnCancellation { cancel() }
+                enqueue(
+                    object : Callback {
+                        override fun onResponse(call: Call, response: Response) {
+                            continuation.resume(response)
+                        }
+
+                        override fun onFailure(call: Call, e: IOException) {
+                            if (continuation.isCancelled) return
+                            continuation.resumeWithException(e)
+                        }
+                    },
+                )
+            }
     }
 }

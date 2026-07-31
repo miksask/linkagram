@@ -1,6 +1,9 @@
 package io.github.miksask.linkagram.data.resolver
 
 import io.github.miksask.linkagram.domain.ResolveResult
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -35,7 +38,7 @@ class RedirectResolverTest {
     }
 
     @Test
-    fun directUrl_returnsSuccessWithEmptyChain() {
+    fun directUrl_returnsSuccessWithEmptyChain() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(200))
 
         val result = resolver.resolve(server.url("/final").toString())
@@ -46,7 +49,7 @@ class RedirectResolverTest {
     }
 
     @Test
-    fun redirectChain_recordsEachHop() {
+    fun redirectChain_recordsEachHop() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(301)
@@ -70,7 +73,7 @@ class RedirectResolverTest {
     }
 
     @Test
-    fun tooManyRedirects_returnsLimitError() {
+    fun tooManyRedirects_returnsLimitError() = runBlocking {
         repeat(11) { index ->
             server.enqueue(
                 MockResponse()
@@ -86,39 +89,8 @@ class RedirectResolverTest {
     }
 
     @Test
-    fun redirectLoop_isDetected() {
-        server.enqueue(
-            MockResponse()
-                .setResponseCode(302)
-                .addHeader("Location", "/a"),
-        )
-        server.enqueue(
-            MockResponse()
-                .setResponseCode(302)
-                .addHeader("Location", "/b"),
-        )
-        // Third response unused if loop detected when revisiting /a after /b points back.
-        server.enqueue(
-            MockResponse()
-                .setResponseCode(302)
-                .addHeader("Location", "/a"),
-        )
-
-        // Build explicit loop: /a -> /b -> /a
-        // Start at /a
-        // Actually enqueue for /a, /b, then when back to /a we detect loop before request
-        // Wait - visited adds URL before request. /a visited, redirect to /b. /b visited, redirect to /a.
-        // Next iteration /a already in visited -> RedirectLoop.
-        // But we need the Location on /b to point to /a. Re-setup:
-        server.shutdown()
-        server = MockWebServer()
-        server.start()
-        val client = OkHttpClient.Builder()
-            .followRedirects(false)
-            .followSslRedirects(false)
-            .build()
-        resolver = RedirectResolver(client = client, maxRedirects = 10)
-
+    fun redirectLoop_isDetected() = runBlocking {
+        // /a -> /b -> /a: the third hop revisits /a and must stop before requesting it.
         server.enqueue(
             MockResponse()
                 .setResponseCode(302)
@@ -133,10 +105,11 @@ class RedirectResolverTest {
         val result = resolver.resolve(server.url("/a").toString())
 
         assertTrue(result is ResolveResult.RedirectLoop)
+        assertEquals(2, server.requestCount)
     }
 
     @Test
-    fun missingLocation_returnsHttpError() {
+    fun missingLocation_returnsHttpError() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(302))
 
         val result = resolver.resolve(server.url("/missing-location").toString())
@@ -146,7 +119,7 @@ class RedirectResolverTest {
     }
 
     @Test
-    fun malformedLocation_returnsHttpError() {
+    fun malformedLocation_returnsHttpError() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(302)
@@ -159,7 +132,7 @@ class RedirectResolverTest {
     }
 
     @Test
-    fun invalidInput_noNetworkRequest() {
+    fun invalidInput_noNetworkRequest() = runBlocking {
         val result = resolver.resolve("not a url")
 
         assertEquals(ResolveResult.InvalidInput, result)
@@ -167,19 +140,37 @@ class RedirectResolverTest {
     }
 
     @Test
-    fun unsupportedProtocol_ftp() {
+    fun unsupportedProtocol_ftp() = runBlocking {
         val result = resolver.resolve("ftp://example.com/file")
 
         assertEquals(ResolveResult.UnsupportedProtocol, result)
     }
 
     @Test
-    fun httpError_nonRedirectFailure() {
+    fun httpError_nonRedirectFailure() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(500))
 
         val result = resolver.resolve(server.url("/error").toString())
 
         val error = result as ResolveResult.HttpError
         assertEquals(500, error.statusCode)
+    }
+
+    @Test
+    fun slowResponse_cancellationPropagates() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeadersDelay(5, TimeUnit.SECONDS),
+        )
+
+        var cancelled = false
+        try {
+            withTimeout(500) { resolver.resolve(server.url("/slow").toString()) }
+        } catch (_: TimeoutCancellationException) {
+            cancelled = true
+        }
+
+        assertTrue(cancelled)
     }
 }

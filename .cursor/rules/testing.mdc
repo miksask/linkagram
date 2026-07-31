@@ -1,0 +1,20 @@
+---
+description: Unit testing conventions for Linkagram business logic
+globs: **/src/test/**/*.kt
+alwaysApply: false
+---
+
+# Testing
+
+- Business logic must be testable on the JVM; no emulator, no Robolectric.
+- Keep Android UI types out of `core/`, `data/`, and `domain/` so they stay
+  testable.
+- Network tests use `MockWebServer`. Never call real hosts or real shorteners.
+- Inject collaborators through constructor defaults; substitute fakes in tests
+  instead of introducing a DI framework or mocking library.
+- ViewModel tests inject a `StandardTestDispatcher` and use `runTest`.
+- Name tests `subject_condition_expectedResult`.
+- Cover at minimum: URL normalization, redirect limit, redirect loops,
+  unsupported schemes, malformed `Location` headers, cancellation, provider
+  detection, coordinate extraction, invalid coordinates, `lat, lon` formatting.
+- Assert on sealed result types rather than on nullable fields.

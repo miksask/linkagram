@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    # The secrets context is not available in a step-level `if`, so the
+    # presence of a keystore is resolved once here.
+    env:
+      HAS_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: tools platform-tools platforms;android-37.0 build-tools;36.0.0
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run unit tests
+        run: ./gradlew test --no-daemon
+
+      - name: Run lint
+        run: ./gradlew lint --no-daemon
+
+      # Signing is optional: without the secrets the job still produces an
+      # unsigned APK so the workflow stays usable in forks.
+      - name: Decode release keystore
+        if: env.HAS_KEYSTORE == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          echo "LINKAGRAM_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        env:
+          LINKAGRAM_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          LINKAGRAM_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          LINKAGRAM_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            app/build/outputs/apk/release/*.apk \
+            --title "Linkagram $GITHUB_REF_NAME" \
+            --generate-notes

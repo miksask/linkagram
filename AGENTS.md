@@ -1,13 +1,10 @@
-# Claude / multi-agent note
+# Linkagram agent instructions
 
-Canonical agent instructions for this repository live in [`AGENTS.md`](AGENTS.md).
+This file is the canonical instruction set for AI agents working in this
+repository. `CLAUDE.md` is a symlink to this file, so both names resolve here.
 
-Do not duplicate project rules here. Read and follow `AGENTS.md`, then the
-matching files under `docs/specs/`, `docs/decisions/`, and `.agents/skills/`.
-sembleDebug` passed.
-- State clearly that Gradle checks are unavailable.
-- Prefer documentation, specs, ADRs, and agent guidance changes over inventing
-  application code unless the user explicitly asks for a bootstrap.
+Read this file first, then the matching files under `docs/specs/`,
+`docs/decisions/`, and `.agents/skills/`.
 
 ## Project purpose
 
@@ -101,6 +98,11 @@ URL processing handles untrusted user input. Never use WebView or JavaScript to
 resolve URLs. Follow redirects manually with limits, loop detection, and
 timeouts. Do not weaken TLS checks or log full user URLs in release builds.
 
+Cleartext `http://` is permitted on purpose so plain http links can be analysed
+instead of failing as network errors. That is the only relaxation; TLS
+validation, trust anchors, and hostname verification stay at platform defaults.
+See `docs/decisions/ADR-004-privacy-and-networking.md`.
+
 Detailed networking guidance is in `.cursor/rules/network-security.mdc`.
 
 ## Implementation workflow
@@ -125,11 +127,9 @@ A task is complete only when:
 - The feature matches its acceptance criteria.
 - Error and loading states are handled.
 - Relevant unit tests are added or updated.
-- If `./gradlew` exists: `./gradlew test`, `./gradlew lint`, and
-  `./gradlew assembleDebug` succeed where applicable.
-- If `./gradlew` does not exist: the summary explicitly states that Gradle
-  checks were skipped because the Android project is not bootstrapped yet.
-- No secrets, API keys, or local machine paths are committed.
+- `./gradlew test`, `./gradlew lint`, and `./gradlew assembleDebug` succeed.
+- No secrets, API keys, or local machine paths are committed. Machine-specific
+  files such as `local.properties` and `.env-vars.local` stay untracked.
 - README/spec/ADR is updated when behavior changes.
 
 ## Code style

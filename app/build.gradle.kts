@@ -17,8 +17,23 @@ android {
         versionName = "0.1.0"
     }
 
+    // Release signing is configured only when the CI keystore is provided.
+    // Local and fork builds fall back to an unsigned release APK.
+    val keystorePath = System.getenv("LINKAGRAM_KEYSTORE_PATH")
+    signingConfigs {
+        if (!keystorePath.isNullOrBlank()) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("LINKAGRAM_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("LINKAGRAM_KEY_ALIAS")
+                keyPassword = System.getenv("LINKAGRAM_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

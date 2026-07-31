@@ -53,7 +53,7 @@ enum class ResolveError {
 }
 
 class AnalysisViewModel(
-    private val resolveUrl: (String) -> ResolveResult = { RedirectResolver().resolve(it) },
+    private val resolveUrl: suspend (String) -> ResolveResult = RedirectResolver()::resolve,
     private val mapUrlParser: MapUrlParser = MapUrlParser(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
