@@ -37,6 +37,7 @@ Canonical instructions live in [`../AGENTS.md`](../AGENTS.md).
 Cursor rules in [`../.cursor/rules/`](../.cursor/rules/):
 
 - `project-context.mdc` — scope and source of truth (always applied)
+- `git-commits.mdc` — commit message style (always applied)
 - `android-kotlin.mdc` — Kotlin and Compose conventions
 - `network-security.mdc` — untrusted URL and networking rules
 - `testing.mdc` — unit testing conventions

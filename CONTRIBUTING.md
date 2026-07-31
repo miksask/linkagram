@@ -36,6 +36,19 @@ All three must pass before a pull request is ready.
 5. Record substantial decisions as an ADR in [`docs/decisions/`](docs/decisions/).
 6. Update the README when user-visible behaviour changes.
 
+## Commit messages
+
+Imperative mood, sentence case, ending with a period, 72 characters or fewer:
+
+```text
+Add clipboard paste to the analysis screen.
+```
+
+Anything non-trivial gets a body explaining why the change is needed, wrapped
+at 72 characters, naming the spec or ADR it implements. No Conventional Commits
+prefixes. One logical change per commit. Full rule:
+[`.cursor/rules/git-commits.mdc`](.cursor/rules/git-commits.mdc).
+
 ## Code style
 
 - Kotlin only, Jetpack Compose with Material 3.

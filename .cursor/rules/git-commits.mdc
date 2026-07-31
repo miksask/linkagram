@@ -1,0 +1,41 @@
+---
+description: Git commit message style for Linkagram
+alwaysApply: true
+---
+
+# Commit messages
+
+Subject line:
+
+- Imperative mood, sentence case, ends with a period.
+- One line, 72 characters or fewer. No prefix, no ticket id, no emoji.
+- Describe what the commit changes, not which files it touches.
+
+```text
+Add clipboard paste to the analysis screen.
+Fix redirect loop detection for protocol-relative Location headers.
+```
+
+Avoid:
+
+```text
+feat(ui): add clipboard paste     # no Conventional Commits prefixes here
+Added clipboard paste             # past tense, missing period
+Update AnalysisScreen.kt          # names the file, not the change
+fixes                             # says nothing
+```
+
+Body, expected for anything beyond a one-line change:
+
+- Blank line after the subject, wrapped at 72 characters.
+- Explain why the change is needed and what its visible effect is.
+- Name the spec or ADR when the commit implements or changes one, for
+  example `Implements docs/specs/002-redirect-resolution.md`.
+- Do not narrate the process, list which Gradle checks ran, or add AI
+  co-author trailers. AI assistance is disclosed in the pull request.
+
+Scope:
+
+- One logical change per commit; keep unrelated refactors separate.
+- Never commit secrets or machine-specific paths such as
+  `local.properties` and `.env-vars.local`.
