@@ -127,7 +127,9 @@ A task is complete only when:
 - The feature matches its acceptance criteria.
 - Error and loading states are handled.
 - Relevant unit tests are added or updated.
-- `./gradlew test`, `./gradlew lint`, and `./gradlew assembleDebug` succeed.
+- UI changes update or intentionally leave screenshot baselines unchanged.
+- `./gradlew test`, `./gradlew lint`, `./gradlew validateDebugScreenshotTest`,
+  and `./gradlew assembleDebug` succeed.
 - No secrets, API keys, or local machine paths are committed. Machine-specific
   files such as `local.properties` and `.env-vars.local` stay untracked.
 - README/spec/ADR is updated when behavior changes.
@@ -158,6 +160,10 @@ Test at minimum:
 Network resolver tests should use mocked HTTP responses, not real external
 services.
 
+Compose preview screenshot tests cover Spec 004 result states. Preview sources
+live under `app/src/screenshotTest/`; reference images under
+`app/src/screenshotTestDebug/reference/`. See ADR-005.
+
 ## Important commands
 
 When the Gradle wrapper exists:
@@ -166,6 +172,11 @@ When the Gradle wrapper exists:
 ./gradlew assembleDebug
 ./gradlew test
 ./gradlew lint
+./gradlew validateDebugScreenshotTest
+./gradlew updateDebugScreenshotTest
 ```
+
+`updateDebugScreenshotTest` rewrites baselines. Run it only after intentional
+UI changes, never to silence an unexplained failure.
 
 Until then, do not invent a build system or claim these commands ran successfully.

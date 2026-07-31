@@ -29,6 +29,18 @@ Index of product docs, specs, and architecture decisions.
 | [decisions/ADR-002-url-resolution.md](decisions/ADR-002-url-resolution.md) | Accepted — manual redirect following |
 | [decisions/ADR-003-http-client.md](decisions/ADR-003-http-client.md) | Accepted — OkHttp + MockWebServer |
 | [decisions/ADR-004-privacy-and-networking.md](decisions/ADR-004-privacy-and-networking.md) | Accepted — cleartext allowed, TLS untouched |
+| [decisions/ADR-005-screenshot-testing.md](decisions/ADR-005-screenshot-testing.md) | Accepted — Compose Preview Screenshot Testing |
+
+## Prompts
+
+Phase prompts used to drive AI-assisted implementation. They are part of the
+demo narrative, not runtime documentation.
+
+| Document | Status |
+|----------|--------|
+| [prompts/01-start.md](prompts/01-start.md) | Bootstrap and product framing |
+| [prompts/02-next-steps.md](prompts/02-next-steps.md) | Specs 001–003 implementation |
+| [prompts/03-screenshot-tests-and-showcase.md](prompts/03-screenshot-tests-and-showcase.md) | Screenshot tests, CI artifacts, README showcase |
 
 ## Agent guidance
 

@@ -18,3 +18,15 @@ alwaysApply: false
   unsupported schemes, malformed `Location` headers, cancellation, provider
   detection, coordinate extraction, invalid coordinates, `lat, lon` formatting.
 - Assert on sealed result types rather than on nullable fields.
+
+# Screenshot tests
+
+- Compose preview screenshots live in `app/src/screenshotTest/`, annotated with
+  `@PreviewTest` and `@Preview`.
+- Reference images live under `app/src/screenshotTestDebug/reference/` and are
+  committed.
+- Validate with `./gradlew validateDebugScreenshotTest`.
+- Run `./gradlew updateDebugScreenshotTest` only after intentional UI changes.
+  Never rewrite baselines only to silence a failing build.
+- Do not introduce Robolectric for screenshot testing unless ADR-005 is
+  superseded.

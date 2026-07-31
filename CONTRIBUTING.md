@@ -21,10 +21,20 @@ sdk.dir=/path/to/Android/sdk
 ```bash
 ./gradlew test
 ./gradlew lint
+./gradlew validateDebugScreenshotTest
 ./gradlew assembleDebug
 ```
 
-All three must pass before a pull request is ready.
+All four must pass before a pull request is ready.
+
+After intentional Compose UI changes, refresh baselines and review the diff:
+
+```bash
+./gradlew updateDebugScreenshotTest
+```
+
+Do not rewrite screenshot baselines only to make CI green. See
+[ADR-005](docs/decisions/ADR-005-screenshot-testing.md).
 
 ## Workflow
 
@@ -62,6 +72,10 @@ prefixes. One logical change per commit. Full rule:
 Business logic must be testable on the JVM without an emulator. Network tests
 use `MockWebServer`; never call real external hosts, including real URL
 shorteners.
+
+Compose preview screenshot tests live in `app/src/screenshotTest/` and run on
+the host via `./gradlew validateDebugScreenshotTest`. They do not use
+Robolectric or an emulator.
 
 ## Security
 
