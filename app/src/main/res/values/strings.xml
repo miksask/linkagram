@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Linkagram</string>
+    <string name="app_tagline">Inspect shared links and map coordinates</string>
+    <string name="url_input_label">URL</string>
+    <string name="url_input_placeholder">Paste or type a URL</string>
+    <string name="bootstrap_note">URL analysis is not implemented yet. This screen is the bootstrap shell.</string>
+</resources>

@@ -1,4 +1,13 @@
-# Linkagram — AI Agent Guide
+# Claude / multi-agent note
+
+Canonical agent instructions for this repository live in [`AGENTS.md`](AGENTS.md).
+
+Do not duplicate project rules here. Read and follow `AGENTS.md`, then the
+matching files under `docs/specs/`, `docs/decisions/`, and `.agents/skills/`.
+sembleDebug` passed.
+- State clearly that Gradle checks are unavailable.
+- Prefer documentation, specs, ADRs, and agent guidance changes over inventing
+  application code unless the user explicitly asks for a bootstrap.
 
 ## Project purpose
 
@@ -15,6 +24,21 @@ location metadata and coordinates from map-related links.
 This is a public GitHub demo project. The primary goal is to demonstrate
 AI-assisted development of a Kotlin/Android application by an engineer whose
 main background is Python, web development, and microservices.
+
+## Source of truth
+
+When instructions conflict, prefer in this order:
+
+1. Matching file in `docs/specs/` or `docs/decisions/`
+2. `docs/product.md`
+3. This file (`AGENTS.md`)
+4. `README.md`
+
+Task-specific workflows live in `.agents/skills/`. Use them when relevant:
+
+- `implement-feature` — implementing a feature from a spec
+- `android-code-review` — reviewing Android/Kotlin changes
+- `map-url-parser` — adding or changing a map URL parser
 
 ## Core product behavior
 
@@ -71,21 +95,13 @@ Use a simple layered architecture:
 Do not introduce repositories, use cases, DI frameworks, or abstractions merely
 for theoretical purity. Add an abstraction only when it has a concrete use.
 
-## Networking and security requirements
+## Networking and security (summary)
 
-URL processing handles untrusted user input.
+URL processing handles untrusted user input. Never use WebView or JavaScript to
+resolve URLs. Follow redirects manually with limits, loop detection, and
+timeouts. Do not weaken TLS checks or log full user URLs in release builds.
 
-- Never open URLs in a WebView.
-- Do not execute JavaScript.
-- Do not follow redirects indefinitely.
-- Limit redirect count.
-- Use request timeouts.
-- Handle malformed URLs safely.
-- Do not log full URLs in release builds if they may contain tokens or personal data.
-- Avoid storing submitted URLs unless explicit persistence is added.
-- Treat redirect chains as potentially sensitive data.
-- Do not bypass TLS certificate validation.
-- Do not disable hostname verification.
+Detailed networking guidance is in `.cursor/rules/network-security.mdc`.
 
 ## Implementation workflow
 
@@ -100,6 +116,8 @@ Before implementing a non-trivial feature:
 
 For substantial decisions, add an ADR under `docs/decisions/`.
 
+Prefer the `implement-feature` skill for the full feature checklist.
+
 ## Definition of done
 
 A task is complete only when:
@@ -107,9 +125,10 @@ A task is complete only when:
 - The feature matches its acceptance criteria.
 - Error and loading states are handled.
 - Relevant unit tests are added or updated.
-- `./gradlew test` passes where applicable.
-- `./gradlew lint` passes where applicable.
-- `./gradlew assembleDebug` succeeds.
+- If `./gradlew` exists: `./gradlew test`, `./gradlew lint`, and
+  `./gradlew assembleDebug` succeed where applicable.
+- If `./gradlew` does not exist: the summary explicitly states that Gradle
+  checks were skipped because the Android project is not bootstrapped yet.
 - No secrets, API keys, or local machine paths are committed.
 - README/spec/ADR is updated when behavior changes.
 
@@ -136,11 +155,17 @@ Test at minimum:
 - Invalid/malformed coordinates
 - Clipboard formatting (`lat, lon`)
 
-Network resolver tests should use mocked HTTP responses, not real external services.
+Network resolver tests should use mocked HTTP responses, not real external
+services.
 
 ## Important commands
+
+When the Gradle wrapper exists:
 
 ```bash
 ./gradlew assembleDebug
 ./gradlew test
 ./gradlew lint
+```
+
+Until then, do not invent a build system or claim these commands ran successfully.

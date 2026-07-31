@@ -1,0 +1,17 @@
+---
+description: Kotlin and Jetpack Compose conventions for Linkagram
+globs: **/*.kt,**/*.kts
+alwaysApply: false
+---
+
+# Android Kotlin conventions
+
+- Kotlin only. Prefer Jetpack Compose and Material 3 for UI.
+- Keep screen state in a ViewModel; expose immutable UI state.
+- Prefer Coroutines and Flow for asynchronous work.
+- Prefer sealed types over nullable values for parse/resolve results.
+- Prefer Android standard APIs and stable Jetpack libraries.
+- Prefer minimal dependencies. Use Kotlin DSL (`*.gradle.kts`).
+- Do not introduce repositories, DI frameworks, or extra layers unless they
+  solve a concrete problem already present in the code.
+- Keep functions small and purpose-specific. Prefer boring, readable code.

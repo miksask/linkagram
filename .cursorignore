@@ -1,0 +1,34 @@
+# Cursor ignore — complements .gitignore for indexing/context.
+# Not a substitute for .gitignore and not absolute secret protection.
+# Secrets must never be committed; terminal/MCP tools may still reach ignored paths.
+
+# Android / Gradle build outputs
+.gradle/
+**/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Artifacts and signing
+*.apk
+*.aab
+*.ap_
+*.dex
+*.jks
+*.keystore
+*.keystore.properties
+keystore.properties
+signing.properties
+
+# OS / misc
+.DS_Store
+*.log
+*.hprof
