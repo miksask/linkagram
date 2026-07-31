@@ -5,23 +5,16 @@ metadata and coordinates from map links.
 
 ## Current status
 
-The repository now includes a **minimal Android/Compose bootstrap**:
+Runnable Android/Compose app with:
 
-- Single-module Gradle project (`:app`)
-- Application id / namespace: `io.github.miksask.linkagram`
-- Jetpack Compose + Material 3 shell with a manual URL input field
-- Unit test for the analysis screen ViewModel
-- GitHub Actions CI for `test`, `lint`, and `assembleDebug`
+- URL intake from Share (`ACTION_SEND`), VIEW intents, clipboard, and manual input
+- URL validation and normalization (Spec 001)
+- Manual HTTP redirect resolution with chain display (Spec 002)
+- Map URL parsing for Google, Yandex, OSM, Apple, and generic coordinates (Spec 003)
+- One-tap copy of coordinates as `lat, lon`
+- Unit tests and GitHub Actions CI (`test`, `lint`, `assembleDebug`)
 
-Product features (share/VIEW intents, redirect resolution, map parsers) are
-specified under `docs/` and are not implemented yet.
-
-Also present:
-
-- Product description, specs, and ADRs under `docs/`
-- Agent instructions in `AGENTS.md`
-- Cursor project rules in `.cursor/rules/`
-- Portable Agent Skills in `.agents/skills/`
+Application id / namespace: `io.github.miksask.linkagram`
 
 ## Why this project exists
 
@@ -35,48 +28,17 @@ The goal is not to claim that AI writes software autonomously. The goal is to
 demonstrate a workflow where AI accelerates development while project
 constraints, specifications, reviews, tests, and architecture remain explicit.
 
-## Planned features
+## Features
 
 - Receive URLs from Android Share sheet and VIEW intents
 - Paste URLs from clipboard
-- Resolve short links
-- Display redirect chain
-- Detect map links
-- Extract coordinates and available place/address metadata
+- Resolve short links and show redirect hops with status codes
+- Detect map links and extract coordinates / available place metadata
 - Copy `latitude, longitude` in one tap
 
 ## Build and test
 
 Requires JDK 17 and Android SDK platform 37.
-
-### macOS / Homebrew JDK
-
-Homebrew installs `openjdk@17` as keg-only, so macOS `/usr/bin/java` stays as
-a stub and prints `Unable to locate a Java Runtime` until `JAVA_HOME` points at
-the real JDK.
-
-Local machine exports live in `.env-vars.local` (not committed). Before Gradle:
-
-```bash
-source .env-vars.local
-```
-
-Example contents:
-
-```bash
-export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
-export PATH="$JAVA_HOME/bin:$PATH"
-```
-
-Optional: register the JDK for `/usr/libexec/java_home`:
-
-```bash
-sudo ln -sfn /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk \
-  /Library/Java/JavaVirtualMachines/openjdk-17.jdk
-```
-
-
-### Gradle commands
 
 ```bash
 ./gradlew test
@@ -97,7 +59,7 @@ Debug APK output:
 - Cursor rules: `.cursor/rules/`
 - Agent skills: `.agents/skills/`
 - CI: GitHub Actions
-- APKs: GitHub Releases (after release workflow is added)
+- APKs: GitHub Releases (release workflow still to add)
 
 ## Cursor / AI workflow
 
@@ -113,9 +75,7 @@ Debug APK output:
 
 ## Current limitations
 
-- No URL resolution or map parsing yet
-- No share / VIEW / clipboard entry points yet
-- No JavaScript-based redirects planned
-- No WebView planned
-- Map metadata extraction will depend on URL format
+- JavaScript-only redirects are not followed (no WebView)
+- Map metadata depends on stable URL structure, not page scraping
+- Not every provider URL variant is covered yet
 - No persistent link history in MVP

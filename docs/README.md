@@ -13,15 +13,9 @@ Index of product docs, specs, and architecture decisions.
 | Document | Status |
 |----------|--------|
 | [specs/000-template.md](specs/000-template.md) | Template for new specs |
-| [specs/002-redirect-resolution.md](specs/002-redirect-resolution.md) | Accepted draft for redirect resolution |
-
-### Planned specs
-
-These are expected before or during feature work; they are not written yet:
-
-- `001` — URL input and normalization (share / VIEW / clipboard / manual)
-- Map provider parsing specs (Google, Yandex, OSM, Apple, generic coordinates)
-- UI results screen (redirect chain, metadata, coordinate copy)
+| [specs/001-url-input-normalization.md](specs/001-url-input-normalization.md) | Accepted — URL intake and normalization |
+| [specs/002-redirect-resolution.md](specs/002-redirect-resolution.md) | Accepted — manual redirect following |
+| [specs/003-map-url-parsing.md](specs/003-map-url-parsing.md) | Accepted — map URL parsing |
 
 ## Decisions
 
@@ -30,6 +24,7 @@ These are expected before or during feature work; they are not written yet:
 | [decisions/ADR-template.md](decisions/ADR-template.md) | Template for new ADRs |
 | [decisions/ADR-001-android-project-structure.md](decisions/ADR-001-android-project-structure.md) | Accepted — single-module package layout |
 | [decisions/ADR-002-url-resolution.md](decisions/ADR-002-url-resolution.md) | Accepted — manual redirect following |
+| [decisions/ADR-003-http-client.md](decisions/ADR-003-http-client.md) | Accepted — OkHttp + MockWebServer |
 
 ## Agent guidance
 
