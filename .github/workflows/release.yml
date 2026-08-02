@@ -60,11 +60,25 @@ jobs:
           LINKAGRAM_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
 
+      # Attach a stable download name on GitHub Releases. Signed builds drop
+      # the -unsigned suffix; v0.1.1 keeps its original asset name.
+      - name: Name release APK
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          src="$(ls app/build/outputs/apk/release/*.apk | head -n 1)"
+          if [ "$HAS_KEYSTORE" = "true" ]; then
+            dest="app/build/outputs/apk/release/Linkagram-${version}.apk"
+          else
+            dest="app/build/outputs/apk/release/Linkagram-${version}-unsigned.apk"
+          fi
+          mv "$src" "$dest"
+          echo "Release APK: $dest"
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            app/build/outputs/apk/release/*.apk \
+            app/build/outputs/apk/release/Linkagram-*.apk \
             --title "Linkagram $GITHUB_REF_NAME" \
             --generate-notes
