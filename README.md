@@ -2,7 +2,7 @@
 
 Android app that resolves shared URLs, traces redirects, extracts location metadata and coordinates from map links, and shows title summaries from allowlisted rich-link hosts such as KOLEO.
 
-**minSdk 26** (Android 8.0). Debug APK from CI artifacts on every push; release APKs are published to GitHub Releases when a `v*` tag is pushed.
+**minSdk 26** (Android 8.0). Debug APK from CI artifacts on pushes to `main` and on pull requests; release APKs are published to GitHub Releases when a `v*` tag is pushed.
 
 <p align="center">
   <img src="docs/images/linkagram-icon.png" alt="Linkagram app icon" width="120" />

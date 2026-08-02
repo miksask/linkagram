@@ -90,7 +90,9 @@ display the final URL and redirect chain.
 
 When a recognized map URL has place/address metadata but no coordinates, the
 user may tap Find coordinates to look up an approximate pin via OpenStreetMap
-Nominatim (Spec 008 / ADR-008). That lookup is never automatic.
+Nominatim (Spec 008 / ADR-008). That lookup is never automatic. If history was
+saved for that analysis, a successful lookup updates the same row’s coordinates;
+it does not add a second entry.
 
 ## Privacy principles
 
@@ -104,5 +106,7 @@ Nominatim (Spec 008 / ADR-008). That lookup is never automatic.
 - For allowlisted rich-link hosts, a capped slice of the final HTML response may
   be read during resolve to extract title/og tags (Spec 009 / ADR-009).
 - Opt-in Nominatim geocoding may send place/address text to OpenStreetMap after
-  an explicit tap (Spec 008 / ADR-008); results are labelled approximate and are
-  not written into history.
+  an explicit tap (Spec 008 / ADR-008). Results are labelled approximate in the
+  UI. Geocode never creates a new history row; if that analysis was already
+  saved, the existing row’s latitude/longitude are updated in place. The
+  approximate label itself is not persisted on history rows.
