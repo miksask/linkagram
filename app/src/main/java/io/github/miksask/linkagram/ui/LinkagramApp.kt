@@ -39,6 +39,7 @@ import androidx.navigation.navArgument
 import io.github.miksask.linkagram.R
 import io.github.miksask.linkagram.data.history.HistoryRepository
 import io.github.miksask.linkagram.data.maps.MapUrlParser
+import io.github.miksask.linkagram.domain.GeocodeResult
 import io.github.miksask.linkagram.domain.HistoryEntry
 import io.github.miksask.linkagram.domain.ResolveResult
 import io.github.miksask.linkagram.ui.analysis.AnalysisScreen
@@ -59,6 +60,7 @@ import kotlinx.coroutines.launch
 fun LinkagramApp(
     resolveUrl: suspend (String) -> ResolveResult,
     mapUrlParser: MapUrlParser,
+    geocode: suspend (String?, String?) -> GeocodeResult,
     historyRepository: HistoryRepository,
     pendingIncomingUrl: String?,
     onIncomingUrlConsumed: () -> Unit,
@@ -71,8 +73,8 @@ fun LinkagramApp(
     val showBottomBar = currentRoute == LinkagramDestinations.ANALYZE ||
         currentRoute == LinkagramDestinations.HISTORY
 
-    val analysisFactory = remember(resolveUrl, mapUrlParser, historyRepository) {
-        AnalysisViewModel.Factory(resolveUrl, mapUrlParser, historyRepository)
+    val analysisFactory = remember(resolveUrl, mapUrlParser, geocode, historyRepository) {
+        AnalysisViewModel.Factory(resolveUrl, mapUrlParser, geocode, historyRepository)
     }
     val analysisViewModel: AnalysisViewModel = viewModel(factory = analysisFactory)
     val historyViewModel: HistoryViewModel = viewModel(

@@ -21,6 +21,7 @@ Index of product docs, specs, and architecture decisions.
 | [specs/005-clipboard.md](specs/005-clipboard.md) | Accepted — clipboard read and copy |
 | [specs/006-local-analysis-history.md](specs/006-local-analysis-history.md) | Accepted — opt-in local analysis history |
 | [specs/007-launcher-icon.md](specs/007-launcher-icon.md) | Accepted — brand adaptive launcher icon |
+| [specs/008-address-geocoding.md](specs/008-address-geocoding.md) | Accepted — opt-in Nominatim address geocoding |
 
 ## Decisions
 
@@ -30,10 +31,11 @@ Index of product docs, specs, and architecture decisions.
 | [decisions/ADR-001-android-project-structure.md](decisions/ADR-001-android-project-structure.md) | Accepted — single-module package layout |
 | [decisions/ADR-002-url-resolution.md](decisions/ADR-002-url-resolution.md) | Accepted — manual redirect following |
 | [decisions/ADR-003-http-client.md](decisions/ADR-003-http-client.md) | Accepted — OkHttp + MockWebServer |
-| [decisions/ADR-004-privacy-and-networking.md](decisions/ADR-004-privacy-and-networking.md) | Accepted — cleartext allowed, TLS untouched; persistence carve-out in ADR-006 |
+| [decisions/ADR-004-privacy-and-networking.md](decisions/ADR-004-privacy-and-networking.md) | Accepted — cleartext allowed, TLS untouched; carve-outs in ADR-006 / ADR-008 |
 | [decisions/ADR-005-screenshot-testing.md](decisions/ADR-005-screenshot-testing.md) | Accepted — Compose Preview Screenshot Testing |
 | [decisions/ADR-006-local-analysis-history-storage.md](decisions/ADR-006-local-analysis-history-storage.md) | Accepted — Room + DataStore for local history |
 | [decisions/ADR-007-adaptive-launcher-icon.md](decisions/ADR-007-adaptive-launcher-icon.md) | Accepted — finished PNG as adaptive foreground |
+| [decisions/ADR-008-address-geocoding.md](decisions/ADR-008-address-geocoding.md) | Accepted — opt-in Nominatim geocoding |
 
 ## Prompts
 

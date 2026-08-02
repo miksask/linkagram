@@ -6,11 +6,13 @@ import androidx.lifecycle.viewModelScope
 import io.github.miksask.linkagram.core.url.InvalidUrlReason
 import io.github.miksask.linkagram.core.url.UrlNormalizationResult
 import io.github.miksask.linkagram.core.url.UrlNormalizer
+import io.github.miksask.linkagram.data.geocoding.NominatimGeocoder
 import io.github.miksask.linkagram.data.history.HistoryRepository
 import io.github.miksask.linkagram.data.maps.MapUrlParser
 import io.github.miksask.linkagram.data.resolver.RedirectResolver
 import io.github.miksask.linkagram.domain.CompletedAnalysis
 import io.github.miksask.linkagram.domain.CoordinateFormatter
+import io.github.miksask.linkagram.domain.GeocodeResult
 import io.github.miksask.linkagram.domain.HistorySaveResult
 import io.github.miksask.linkagram.domain.LocationInfo
 import io.github.miksask.linkagram.domain.MapParseResult
@@ -37,11 +39,21 @@ data class AnalysisUiState(
     val location: LocationInfo? = null,
     val coordinatesText: String? = null,
     val coordinatesCopied: Boolean = false,
+    val coordinatesAreApproximate: Boolean = false,
+    val geocodeState: GeocodeState = GeocodeState.Unavailable,
     val validationError: ValidationError? = null,
     val resolveError: ResolveError? = null,
     val isAnalyzing: Boolean = false,
     val historySaveNotice: HistorySaveNotice? = null,
 )
+
+sealed interface GeocodeState {
+    data object Unavailable : GeocodeState
+    data object Available : GeocodeState
+    data object Loading : GeocodeState
+    data object NotFound : GeocodeState
+    data object Failed : GeocodeState
+}
 
 enum class ValidationError {
     Empty,
@@ -68,6 +80,8 @@ enum class HistorySaveNotice {
 class AnalysisViewModel(
     private val resolveUrl: suspend (String) -> ResolveResult = RedirectResolver()::resolve,
     private val mapUrlParser: MapUrlParser = MapUrlParser(),
+    private val geocode: suspend (String?, String?) -> GeocodeResult =
+        NominatimGeocoder()::geocode,
     private val historyRepository: HistoryRepository? = null,
     private val clock: Clock = Clock.systemDefaultZone(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
@@ -76,6 +90,7 @@ class AnalysisViewModel(
     val uiState: StateFlow<AnalysisUiState> = _uiState.asStateFlow()
 
     private var analyzeJob: Job? = null
+    private var geocodeJob: Job? = null
 
     fun onDraftUrlChanged(value: String) {
         _uiState.update { clearResults(it.copy(draftUrl = value)) }
@@ -97,6 +112,7 @@ class AnalysisViewModel(
 
     fun analyze() {
         analyzeJob?.cancel()
+        geocodeJob?.cancel()
         when (val normalized = UrlNormalizer.normalize(_uiState.value.draftUrl)) {
             is UrlNormalizationResult.InvalidUrl -> {
                 _uiState.update {
@@ -129,12 +145,55 @@ class AnalysisViewModel(
         }
     }
 
+    fun onFindCoordinates() {
+        val state = _uiState.value
+        val location = state.location ?: return
+        if (state.coordinatesText != null) return
+        if (state.geocodeState == GeocodeState.Loading) return
+        if (!canGeocode(location)) return
+
+        geocodeJob?.cancel()
+        _uiState.update { it.copy(geocodeState = GeocodeState.Loading) }
+        geocodeJob = viewModelScope.launch {
+            val result = withContext(ioDispatcher) {
+                geocode(location.placeName, location.address)
+            }
+            applyGeocodeResult(result)
+        }
+    }
+
     fun onCoordinatesCopied() {
         _uiState.update { it.copy(coordinatesCopied = true) }
     }
 
     fun consumeHistorySaveNotice() {
         _uiState.update { it.copy(historySaveNotice = null) }
+    }
+
+    private fun applyGeocodeResult(result: GeocodeResult) {
+        when (result) {
+            is GeocodeResult.Found -> {
+                val text = CoordinateFormatter.format(result.latitude, result.longitude)
+                _uiState.update {
+                    it.copy(
+                        coordinatesText = text,
+                        coordinatesAreApproximate = true,
+                        coordinatesCopied = false,
+                        geocodeState = GeocodeState.Unavailable,
+                        location = it.location?.copy(
+                            latitude = result.latitude,
+                            longitude = result.longitude,
+                        ),
+                    )
+                }
+            }
+            GeocodeResult.NotFound -> {
+                _uiState.update { it.copy(geocodeState = GeocodeState.NotFound) }
+            }
+            is GeocodeResult.Failed -> {
+                _uiState.update { it.copy(geocodeState = GeocodeState.Failed) }
+            }
+        }
     }
 
     private suspend fun applyResolveResult(
@@ -156,6 +215,8 @@ class AnalysisViewModel(
                         location = location,
                         coordinatesText = location?.toCoordinatesText(),
                         coordinatesCopied = false,
+                        coordinatesAreApproximate = false,
+                        geocodeState = initialGeocodeState(location),
                     )
                 }
                 maybeSaveHistory(
@@ -224,6 +285,8 @@ class AnalysisViewModel(
                         resolveError = ResolveError.Http,
                         location = location,
                         coordinatesText = location?.toCoordinatesText(),
+                        coordinatesAreApproximate = false,
+                        geocodeState = initialGeocodeState(location),
                     )
                 }
             }
@@ -260,6 +323,8 @@ class AnalysisViewModel(
             location = null,
             coordinatesText = null,
             coordinatesCopied = false,
+            coordinatesAreApproximate = false,
+            geocodeState = GeocodeState.Unavailable,
             historySaveNotice = null,
         )
 
@@ -267,6 +332,19 @@ class AnalysisViewModel(
         val lat = latitude ?: return null
         val lon = longitude ?: return null
         return CoordinateFormatter.format(lat, lon)
+    }
+
+    private fun initialGeocodeState(location: LocationInfo?): GeocodeState =
+        if (location != null && !location.hasCoordinates && canGeocode(location)) {
+            GeocodeState.Available
+        } else {
+            GeocodeState.Unavailable
+        }
+
+    private fun canGeocode(location: LocationInfo): Boolean {
+        val place = location.placeName?.trim().orEmpty()
+        val address = location.address?.trim().orEmpty()
+        return place.isNotEmpty() || address.isNotEmpty()
     }
 
     private fun InvalidUrlReason.toValidationError(): ValidationError = when (this) {
@@ -279,6 +357,7 @@ class AnalysisViewModel(
     class Factory(
         private val resolveUrl: suspend (String) -> ResolveResult,
         private val mapUrlParser: MapUrlParser,
+        private val geocode: suspend (String?, String?) -> GeocodeResult,
         private val historyRepository: HistoryRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -287,6 +366,7 @@ class AnalysisViewModel(
                 return AnalysisViewModel(
                     resolveUrl = resolveUrl,
                     mapUrlParser = mapUrlParser,
+                    geocode = geocode,
                     historyRepository = historyRepository,
                 ) as T
             }

@@ -1,6 +1,7 @@
 package io.github.miksask.linkagram
 
 import android.app.Application
+import io.github.miksask.linkagram.data.geocoding.NominatimGeocoder
 import io.github.miksask.linkagram.data.history.DataStoreHistorySettingsRepository
 import io.github.miksask.linkagram.data.history.HistoryRepository
 import io.github.miksask.linkagram.data.history.HistorySettingsRepository
@@ -31,4 +32,5 @@ class AppContainer(application: Application) {
 
     val redirectResolver: RedirectResolver = RedirectResolver()
     val mapUrlParser: MapUrlParser = MapUrlParser()
+    val nominatimGeocoder: NominatimGeocoder = NominatimGeocoder()
 }

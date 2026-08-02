@@ -109,6 +109,8 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("app.cash.turbine:turbine:1.2.0")
+    // Real org.json for JVM unit tests; the Android stub is not functional.
+    testImplementation("org.json:json:20250517")
 
     screenshotTestImplementation("com.android.tools.screenshot:screenshot-validation-api:0.0.1-alpha15")
     screenshotTestImplementation("androidx.compose.ui:ui-tooling")

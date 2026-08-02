@@ -149,6 +149,67 @@ fun AnalysisScreenSuccessDarkPreview() {
     }
 }
 
+@PreviewTest
+@Preview(showBackground = true, name = "no_coordinates")
+@Composable
+fun AnalysisScreenNoCoordinatesPreview() {
+    LinkagramTheme {
+        AnalysisScreenContent(
+            state = AnalysisUiState(
+                draftUrl = "https://maps.app.goo.gl/example",
+                finalUrl =
+                    "https://www.google.com/maps/place/Centrum+Ksztalcenia," +
+                        "+Stefana+Zeromskiego+115,+90-542+Lodz/" +
+                        "data=!4m2!3m1!1s0x471a352808de581d:0x9eac1c1927024e88",
+                finalStatusCode = 200,
+                location = LocationInfo(
+                    provider = MapProvider.GoogleMaps,
+                    placeName = "Centrum Ksztalcenia",
+                    address = "Stefana Zeromskiego 115, 90-542 Lodz",
+                ),
+                geocodeState = GeocodeState.Available,
+            ),
+            onDraftUrlChanged = {},
+            onAnalyze = {},
+            onPasteFromClipboard = {},
+            onCopyCoordinates = {},
+            onFindCoordinates = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, name = "approximate_coordinates")
+@Composable
+fun AnalysisScreenApproximateCoordinatesPreview() {
+    LinkagramTheme {
+        AnalysisScreenContent(
+            state = AnalysisUiState(
+                draftUrl = "https://maps.app.goo.gl/example",
+                finalUrl =
+                    "https://www.google.com/maps/place/Centrum+Ksztalcenia," +
+                        "+Stefana+Zeromskiego+115,+90-542+Lodz/" +
+                        "data=!4m2!3m1!1s0x471a352808de581d:0x9eac1c1927024e88",
+                finalStatusCode = 200,
+                location = LocationInfo(
+                    provider = MapProvider.GoogleMaps,
+                    placeName = "Centrum Ksztalcenia",
+                    address = "Stefana Zeromskiego 115, 90-542 Lodz",
+                    latitude = 51.7554125,
+                    longitude = 19.4463773,
+                ),
+                coordinatesText = "51.7554125, 19.4463773",
+                coordinatesAreApproximate = true,
+            ),
+            onDraftUrlChanged = {},
+            onAnalyze = {},
+            onPasteFromClipboard = {},
+            onCopyCoordinates = {},
+            onFindCoordinates = {},
+        )
+    }
+}
+
 private fun successState(): AnalysisUiState = AnalysisUiState(
     draftUrl = "https://maps.app.goo.gl/example",
     finalUrl = "https://www.google.com/maps/@55.755826,37.617300,17z",

@@ -36,6 +36,11 @@
     <string name="coordinates_label">Coordinates: %1$s</string>
     <string name="copy_coordinates">Copy coordinates</string>
     <string name="coordinates_copied">Copied</string>
+    <string name="find_coordinates">Find coordinates</string>
+    <string name="finding_coordinates">Looking up coordinates…</string>
+    <string name="coordinates_approximate">Approximate, from OpenStreetMap</string>
+    <string name="error_geocode_not_found">No coordinates found for this address.</string>
+    <string name="error_geocode_failed">Could not look up coordinates. Try again later.</string>
     <string name="history_saved_notice">Saved to history</string>
     <string name="history_save_failed_notice">Could not save to history</string>
     <string name="history_title">History</string>

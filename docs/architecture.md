@@ -15,8 +15,9 @@ io.github.miksask.linkagram/
 ├── data/
 │   ├── history/     Room DB, DAO, HistoryRepository, DataStore settings
 │   ├── maps/        MapUrlParser + one parser per provider
+│   ├── geocoding/   NominatimGeocoder — opt-in address lookup
 │   └── resolver/    RedirectResolver — manual HTTP redirect following
-├── domain/          LocationInfo, ResolveResult, HistoryEntry, formatters
+├── domain/          LocationInfo, ResolveResult, GeocodeResult, HistoryEntry
 └── ui/
     ├── analysis/    AnalysisScreen, AnalysisViewModel
     ├── history/     HistoryScreen, HistoryDetailsScreen, ViewModels
@@ -41,6 +42,8 @@ flowchart TD
     Resolver -->|"ResolveResult"| Parser["MapUrlParser"]
     Parser --> AnalysisState
     Parser -->|"Success snapshot"| HistoryRepo["HistoryRepository"]
+    AnalysisVM -->|"user tap"| Geocoder["NominatimGeocoder"]
+    Geocoder --> AnalysisState
     HistoryRepo --> RoomDB["Room + DataStore"]
     HistoryRepo --> HistoryVM["HistoryViewModel"]
     HistoryRepo --> SettingsVM["SettingsViewModel"]
@@ -52,9 +55,10 @@ flowchart TD
 ## Rules
 
 - The UI layer contains no URL processing or SQL; it renders immutable UI state.
-- `RedirectResolver`, map parsers, and history date/search helpers stay free of
-  Compose so they are unit-testable on the JVM.
+- `RedirectResolver`, map parsers, geocoder, and history date/search helpers stay
+  free of Compose so they are unit-testable on the JVM.
 - Map parsers never perform network requests. They parse the final URL only.
+- Geocoding runs only after an explicit user tap (Spec 008 / ADR-008).
 - `HistoryRepository` / `HistorySettingsRepository` are the only justified
   data-access seams for Spec 006. No DI framework; `AppContainer` holds
   singletons and ViewModel factories.
@@ -67,6 +71,8 @@ flowchart TD
 class AnalysisViewModel(
     private val resolveUrl: suspend (String) -> ResolveResult = RedirectResolver()::resolve,
     private val mapUrlParser: MapUrlParser = MapUrlParser(),
+    private val geocode: suspend (String?, String?) -> GeocodeResult =
+        NominatimGeocoder()::geocode,
     private val historyRepository: HistoryRepository? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 )
@@ -78,6 +84,7 @@ Production wiring uses `LinkagramApplication.container` and ViewModel
 ## Networking and persistence
 
 One `OkHttpClient` per resolver instance, with automatic redirects disabled.
+The geocoder uses a separate client that follows redirects.
 See [ADR-002](decisions/ADR-002-url-resolution.md),
 [ADR-003](decisions/ADR-003-http-client.md), and
 [ADR-004](decisions/ADR-004-privacy-and-networking.md).

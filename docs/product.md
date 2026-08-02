@@ -72,6 +72,10 @@ Expected result:
 Support should be incremental. Unsupported map URLs must still display the final URL
 and redirect chain.
 
+When a recognized map URL has place/address metadata but no coordinates, the
+user may tap Find coordinates to look up an approximate pin via OpenStreetMap
+Nominatim (Spec 008 / ADR-008). That lookup is never automatic.
+
 ## Privacy principles
 
 - No accounts.
@@ -81,3 +85,6 @@ and redirect chain.
   backup and device transfer. See Spec 006 and ADR-006.
 - No location permission required.
 - The app only accesses URLs explicitly shared, pasted, or entered by the user.
+- Opt-in Nominatim geocoding may send place/address text to OpenStreetMap after
+  an explicit tap (Spec 008 / ADR-008); results are labelled approximate and are
+  not written into history.

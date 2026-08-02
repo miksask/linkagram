@@ -29,12 +29,15 @@ Runnable Android/Compose app with:
 - URL intake from Share (`ACTION_SEND`), VIEW intents, clipboard, and manual input
 - URL validation and normalization (Spec 001)
 - Manual HTTP redirect resolution with chain display (Spec 002)
-- Map URL parsing for Google, Yandex, OSM, Apple, and generic coordinates (Spec 003)
+- Map URL parsing for Google, Yandex, OSM, Apple, and generic coordinates (Spec 003),
+  including Google `!3d/!4d` place pins after short-link resolution
 - Result presentation for Spec 004 states (idle, analyzing, errors, location)
 - One-tap copy of coordinates as `lat, lon` (Spec 005)
 - Opt-in local analysis history with search, date filters, and delete/undo
   (Spec 006 / ADR-006); off by default, Room + DataStore, excluded from backup
 - Brand adaptive launcher icon from designer artwork (Spec 007 / ADR-007)
+- Opt-in "Find coordinates" via OpenStreetMap Nominatim when a map URL has a
+  place/address but no coordinates (Spec 008 / ADR-008)
 - Host-side Compose preview screenshot tests (ADR-005)
 - Unit tests and GitHub Actions CI (`test`, `lint`, `validateDebugScreenshotTest`,
   `assembleDebug`), with screenshot reports and the debug APK uploaded as artifacts
@@ -63,6 +66,7 @@ constraints, specifications, reviews, tests, and architecture remain explicit.
 - Resolve short links and show redirect hops with status codes
 - Detect map links and extract coordinates / available place metadata
 - Copy `latitude, longitude` in one tap
+- Look up approximate coordinates from a place address on demand (Nominatim)
 - Optional on-device history of successful analyses (search, date filters, delete)
 
 ## Build and test

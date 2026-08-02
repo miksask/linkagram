@@ -60,6 +60,7 @@ fun AnalysisScreen(
             clipboard.setPrimaryClip(ClipData.newPlainText("coordinates", text))
             viewModel.onCoordinatesCopied()
         },
+        onFindCoordinates = viewModel::onFindCoordinates,
         modifier = modifier,
     )
 }
@@ -71,6 +72,7 @@ fun AnalysisScreenContent(
     onAnalyze: () -> Unit,
     onPasteFromClipboard: () -> Unit,
     onCopyCoordinates: (String) -> Unit,
+    onFindCoordinates: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -152,7 +154,10 @@ fun AnalysisScreenContent(
                 location = location,
                 coordinatesText = state.coordinatesText,
                 coordinatesCopied = state.coordinatesCopied,
+                coordinatesAreApproximate = state.coordinatesAreApproximate,
+                geocodeState = state.geocodeState,
                 onCopyCoordinates = onCopyCoordinates,
+                onFindCoordinates = onFindCoordinates,
             )
         }
         if (state.redirectChain.isNotEmpty()) {
@@ -172,7 +177,10 @@ private fun LocationSection(
     location: LocationInfo,
     coordinatesText: String?,
     coordinatesCopied: Boolean,
+    coordinatesAreApproximate: Boolean,
+    geocodeState: GeocodeState,
     onCopyCoordinates: (String) -> Unit,
+    onFindCoordinates: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -200,12 +208,55 @@ private fun LocationSection(
                 text = stringResource(R.string.coordinates_label, text),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            if (coordinatesAreApproximate) {
+                Text(
+                    text = stringResource(R.string.coordinates_approximate),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Button(onClick = { onCopyCoordinates(text) }) {
                 Text(
                     text = stringResource(
                         if (coordinatesCopied) R.string.coordinates_copied else R.string.copy_coordinates,
                     ),
                 )
+            }
+        }
+        if (coordinatesText == null) {
+            when (geocodeState) {
+                GeocodeState.Available, GeocodeState.NotFound, GeocodeState.Failed -> {
+                    OutlinedButton(onClick = onFindCoordinates) {
+                        Text(text = stringResource(R.string.find_coordinates))
+                    }
+                }
+                GeocodeState.Loading -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        CircularProgressIndicator()
+                        Text(text = stringResource(R.string.finding_coordinates))
+                    }
+                }
+                GeocodeState.Unavailable -> Unit
+            }
+            when (geocodeState) {
+                GeocodeState.NotFound -> {
+                    Text(
+                        text = stringResource(R.string.error_geocode_not_found),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                GeocodeState.Failed -> {
+                    Text(
+                        text = stringResource(R.string.error_geocode_failed),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                else -> Unit
             }
         }
     }

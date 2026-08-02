@@ -5,6 +5,7 @@ import io.github.miksask.linkagram.data.history.HistoryEntryEntity
 import io.github.miksask.linkagram.data.history.HistoryRedirectEntity
 import io.github.miksask.linkagram.data.history.HistoryRepository
 import io.github.miksask.linkagram.data.history.HistorySettingsRepository
+import io.github.miksask.linkagram.domain.GeocodeResult
 import io.github.miksask.linkagram.domain.ResolveResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,6 +19,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -119,6 +121,147 @@ class AnalysisViewModelTest {
 
             assertEquals("55.75, 37.62", viewModel.uiState.value.coordinatesText)
             assertEquals(55.75, viewModel.uiState.value.location?.latitude)
+            assertEquals(GeocodeState.Unavailable, viewModel.uiState.value.geocodeState)
+            assertFalse(viewModel.uiState.value.coordinatesAreApproximate)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun analyze_mapUrlWithoutCoords_setsGeocodeAvailable() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = AnalysisViewModel(
+                resolveUrl = {
+                    ResolveResult.Success(
+                        finalUrl =
+                            "https://www.google.com/maps/place/Centrum," +
+                                "+Stefana+%C5%BBeromskiego+115,+90-542+%C5%81%C3%B3d%C5%BA/" +
+                                "data=!4m2!3m1!1s0x471a352808de581d:0x9eac1c1927024e88",
+                        finalStatusCode = 200,
+                        redirectChain = emptyList(),
+                    )
+                },
+                ioDispatcher = dispatcher,
+            )
+            viewModel.onDraftUrlChanged("https://maps.app.goo.gl/example")
+
+            viewModel.analyze()
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.coordinatesText)
+            assertEquals(GeocodeState.Available, viewModel.uiState.value.geocodeState)
+            assertFalse(viewModel.uiState.value.coordinatesAreApproximate)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun onFindCoordinates_success_setsApproximateCoordinates() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = AnalysisViewModel(
+                resolveUrl = {
+                    ResolveResult.Success(
+                        finalUrl =
+                            "https://www.google.com/maps/place/Centrum," +
+                                "+Stefana+%C5%BBeromskiego+115,+90-542+%C5%81%C3%B3d%C5%BA/" +
+                                "data=!4m2!3m1!1s0x471a352808de581d:0x9eac1c1927024e88",
+                        finalStatusCode = 200,
+                        redirectChain = emptyList(),
+                    )
+                },
+                geocode = { _, _ ->
+                    GeocodeResult.Found(latitude = 51.7554125, longitude = 19.4463773)
+                },
+                ioDispatcher = dispatcher,
+            )
+            viewModel.onDraftUrlChanged("https://maps.app.goo.gl/example")
+            viewModel.analyze()
+            advanceUntilIdle()
+
+            viewModel.onFindCoordinates()
+            advanceUntilIdle()
+
+            assertEquals("51.7554125, 19.4463773", viewModel.uiState.value.coordinatesText)
+            assertTrue(viewModel.uiState.value.coordinatesAreApproximate)
+            assertEquals(GeocodeState.Unavailable, viewModel.uiState.value.geocodeState)
+            assertEquals(51.7554125, viewModel.uiState.value.location?.latitude)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun onFindCoordinates_notFound_setsGeocodeNotFound() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = AnalysisViewModel(
+                resolveUrl = {
+                    ResolveResult.Success(
+                        finalUrl =
+                            "https://www.google.com/maps/place/Centrum," +
+                                "+Stefana+%C5%BBeromskiego+115,+90-542+%C5%81%C3%B3d%C5%BA/" +
+                                "data=!4m2!3m1!1s0x471a352808de581d:0x9eac1c1927024e88",
+                        finalStatusCode = 200,
+                        redirectChain = emptyList(),
+                    )
+                },
+                geocode = { _, _ -> GeocodeResult.NotFound },
+                ioDispatcher = dispatcher,
+            )
+            viewModel.onDraftUrlChanged("https://maps.app.goo.gl/example")
+            viewModel.analyze()
+            advanceUntilIdle()
+
+            viewModel.onFindCoordinates()
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.coordinatesText)
+            assertEquals(GeocodeState.NotFound, viewModel.uiState.value.geocodeState)
+            assertFalse(viewModel.uiState.value.coordinatesAreApproximate)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun onDraftUrlChanged_clearsApproximateCoordinates() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = AnalysisViewModel(
+                resolveUrl = {
+                    ResolveResult.Success(
+                        finalUrl =
+                            "https://www.google.com/maps/place/Centrum," +
+                                "+Stefana+%C5%BBeromskiego+115,+90-542+%C5%81%C3%B3d%C5%BA/" +
+                                "data=!4m2!3m1!1s0x471a352808de581d:0x9eac1c1927024e88",
+                        finalStatusCode = 200,
+                        redirectChain = emptyList(),
+                    )
+                },
+                geocode = { _, _ ->
+                    GeocodeResult.Found(latitude = 51.7554125, longitude = 19.4463773)
+                },
+                ioDispatcher = dispatcher,
+            )
+            viewModel.onDraftUrlChanged("https://maps.app.goo.gl/example")
+            viewModel.analyze()
+            advanceUntilIdle()
+            viewModel.onFindCoordinates()
+            advanceUntilIdle()
+
+            viewModel.onDraftUrlChanged("https://example.com")
+
+            assertNull(viewModel.uiState.value.coordinatesText)
+            assertFalse(viewModel.uiState.value.coordinatesAreApproximate)
+            assertEquals(GeocodeState.Unavailable, viewModel.uiState.value.geocodeState)
         } finally {
             Dispatchers.resetMain()
         }

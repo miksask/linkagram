@@ -6,15 +6,18 @@ Accepted
 
 Persistence rule partially superseded by
 [ADR-006](ADR-006-local-analysis-history-storage.md) for opt-in local analysis
-history only. Cleartext, TLS, logging, clipboard, and permission rules below
-remain in force.
+history only. Network-traffic scope partially superseded by
+[ADR-008](ADR-008-address-geocoding.md) for user-initiated Nominatim geocoding
+only. Cleartext, TLS, logging, clipboard, and permission rules below remain in
+force.
 
 ## Context
 
 Linkagram resolves URLs that come from share sheets, VIEW intents, the
 clipboard, and manual input. Those URLs are untrusted and may contain tokens,
-identifiers, or location data. The app has no backend and no accounts, so the
-only network traffic is the resolution of the URL the user supplied.
+identifiers, or location data. The app has no backend and no accounts. Network
+traffic is the resolution of the URL the user supplied, plus opt-in Nominatim
+geocoding when the user taps Find coordinates (ADR-008).
 
 Two questions needed an explicit answer:
 
