@@ -117,6 +117,13 @@ class MapUrlParserTest(
                 "Łąkowa, 23/25",
             ),
             arrayOf(
+                "https://omaps.app/04NPTpGL6Z/LoftLodz",
+                MapProvider.OrganicMaps,
+                51.75761,
+                19.43783,
+                "LoftLodz",
+            ),
+            arrayOf(
                 "https://omaps.app/34.71399,33.14058/Amathus",
                 MapProvider.OrganicMaps,
                 34.71399,

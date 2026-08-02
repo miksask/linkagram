@@ -12,6 +12,12 @@ class Ge0DecoderTest {
     }
 
     @Test
+    fun decode_loftLodzShareCode_returnsCoordinates() {
+        // https://omaps.app/04NPTpGL6Z/LoftLodz
+        assertEquals(51.75761 to 19.43783, Ge0Decoder.decode("04NPTpGL6Z"))
+    }
+
+    @Test
     fun decode_urlProcessorSample_returnsCoordinates() {
         // Path code from organicmaps/url-processor README examples.
         assertEquals(64.5234 to 12.1234, Ge0Decoder.decode("B4srhdHVVt"))

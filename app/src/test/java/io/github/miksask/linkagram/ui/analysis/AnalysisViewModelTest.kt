@@ -129,6 +129,37 @@ class AnalysisViewModelTest {
     }
 
     @Test
+    fun analyze_organicMapsGe0Url_extractsCoordinatesAndPlace() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val url = "https://omaps.app/04NPTpGL6Z/LoftLodz"
+            val viewModel = AnalysisViewModel(
+                resolveUrl = {
+                    ResolveResult.Success(
+                        finalUrl = url,
+                        finalStatusCode = 200,
+                        redirectChain = emptyList(),
+                    )
+                },
+                ioDispatcher = dispatcher,
+            )
+            viewModel.onDraftUrlChanged(url)
+
+            viewModel.analyze()
+            advanceUntilIdle()
+
+            assertEquals("OrganicMaps", viewModel.uiState.value.location?.provider?.name)
+            assertEquals("LoftLodz", viewModel.uiState.value.location?.placeName)
+            assertEquals(51.75761, viewModel.uiState.value.location?.latitude)
+            assertEquals(19.43783, viewModel.uiState.value.location?.longitude)
+            assertEquals("51.75761, 19.43783", viewModel.uiState.value.coordinatesText)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun analyze_mapUrlWithoutCoords_setsGeocodeAvailable() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
