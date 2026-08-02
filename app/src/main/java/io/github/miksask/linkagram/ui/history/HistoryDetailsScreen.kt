@@ -118,17 +118,43 @@ fun HistoryDetailsScreenContent(
                     text = stringResource(R.string.final_status_label, entry.finalStatusCode),
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                entry.provider?.let {
-                    Text(
-                        text = stringResource(R.string.provider_label, it.name),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-                entry.placeName?.let {
-                    Text(
-                        text = stringResource(R.string.place_label, it),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                when (entry.resultType) {
+                    HistoryResultType.Map -> {
+                        entry.provider?.let {
+                            Text(
+                                text = stringResource(R.string.provider_label, it.name),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                        entry.placeName?.let {
+                            Text(
+                                text = stringResource(R.string.place_label, it),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                    HistoryResultType.RichLink -> {
+                        entry.richLinkKind?.let {
+                            Text(
+                                text = stringResource(R.string.rich_link_kind_label, it.displayName),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                        entry.placeName?.let {
+                            Text(
+                                text = stringResource(R.string.rich_link_title_label, it),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                    HistoryResultType.Url -> {
+                        entry.placeName?.let {
+                            Text(
+                                text = stringResource(R.string.place_label, it),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
                 }
                 entry.address?.let {
                     Text(

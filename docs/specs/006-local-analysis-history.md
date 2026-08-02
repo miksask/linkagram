@@ -35,15 +35,26 @@ Accepted
 
 ### What is saved
 
-Save only after a complete `ResolveResult.Success` plus map parsing, when all of
-these are available:
+Save only after a complete `ResolveResult.Success` plus map and/or rich-link
+parsing, when all of these are available:
 
 - source URL (extracted candidate before normalization)
 - normalized URL
 - final URL
 - final HTTP status code
 - ordered redirect chain (`fromUrl`, `toUrl`, status, ordinal)
-- map parse result (provider / place / address / coordinates when present)
+- map parse result (provider / place / address / coordinates when present),
+  and/or rich-link result (kind / title / optional canonical URL) per Spec 009
+
+Result type:
+
+- `Map` when `LocationInfo` is present
+- `RichLink` when a rich link is present and no map location
+- `Url` when neither map nor rich link was extracted
+
+Storage encoding for `RichLink` (no Room schema migration): `result_type` =
+`RichLink`, kind name in the existing `provider` column, title in `place_name`,
+coordinates null. Canonical URL is not persisted in V1.
 
 Do not save validation errors, network/timeout/loop/limit/protocol/HTTP errors,
 cancellations, or partial rows. Decide whether to save immediately before the
@@ -57,11 +68,13 @@ for the geocode alone.
 ### History screen
 
 Bottom-nav destination **History**, newest first. List rows show shortened
-source and final URLs, place, address, coordinates, provider, completion time,
-and redirect count. Tapping a row opens details by `historyEntryId` only — no
-network request. Details show the saved snapshot, **Copy coordinates** when
-lat/lon are present (Spec 005), and **Analyze again**, which starts a new
-analysis of the source URL. A new success creates a new row.
+source and final URLs, place/title, address, coordinates, map provider or
+rich-link kind, completion time, and redirect count. Tapping a row opens
+details by `historyEntryId` only — no network request. Details show the saved
+snapshot, **Copy coordinates** when lat/lon are present (Spec 005), and
+**Analyze again**, which starts a new analysis of the source URL. A new success
+creates a new row. Rich-link rows show kind and title; they never show
+coordinates or Find coordinates.
 
 States: loading; empty; history disabled and empty; populated list; no search
 matches; no filter matches; local read error. Disabled-with-existing-rows still

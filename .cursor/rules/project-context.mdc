@@ -5,8 +5,9 @@ alwaysApply: true
 
 # Linkagram context
 
-Android app that resolves shared URLs, shows the redirect chain, and extracts
-coordinates from map links. Public demo of AI-assisted development. No backend.
+Android app that resolves shared URLs, shows the redirect chain, extracts
+coordinates from map links, and title summaries from allowlisted rich-link
+hosts. Public demo of AI-assisted development. No backend.
 
 - Canonical instructions: `AGENTS.md`. Behaviour is specified in `docs/specs/`;
   decisions in `docs/decisions/`. A spec wins over this rule.

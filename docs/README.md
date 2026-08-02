@@ -22,6 +22,7 @@ Index of product docs, specs, and architecture decisions.
 | [specs/006-local-analysis-history.md](specs/006-local-analysis-history.md) | Accepted — opt-in local analysis history |
 | [specs/007-launcher-icon.md](specs/007-launcher-icon.md) | Accepted — brand adaptive launcher icon |
 | [specs/008-address-geocoding.md](specs/008-address-geocoding.md) | Accepted — opt-in Nominatim address geocoding |
+| [specs/009-rich-link-extraction.md](specs/009-rich-link-extraction.md) | Accepted — allowlisted title/og rich links |
 
 ## Decisions
 
@@ -31,11 +32,12 @@ Index of product docs, specs, and architecture decisions.
 | [decisions/ADR-001-android-project-structure.md](decisions/ADR-001-android-project-structure.md) | Accepted — single-module package layout |
 | [decisions/ADR-002-url-resolution.md](decisions/ADR-002-url-resolution.md) | Accepted — manual redirect following |
 | [decisions/ADR-003-http-client.md](decisions/ADR-003-http-client.md) | Accepted — OkHttp + MockWebServer |
-| [decisions/ADR-004-privacy-and-networking.md](decisions/ADR-004-privacy-and-networking.md) | Accepted — cleartext allowed, TLS untouched; carve-outs in ADR-006 / ADR-008 |
+| [decisions/ADR-004-privacy-and-networking.md](decisions/ADR-004-privacy-and-networking.md) | Accepted — cleartext allowed, TLS untouched; carve-outs in ADR-006 / ADR-008 / ADR-009 |
 | [decisions/ADR-005-screenshot-testing.md](decisions/ADR-005-screenshot-testing.md) | Accepted — Compose Preview Screenshot Testing |
 | [decisions/ADR-006-local-analysis-history-storage.md](decisions/ADR-006-local-analysis-history-storage.md) | Accepted — Room + DataStore for local history |
 | [decisions/ADR-007-adaptive-launcher-icon.md](decisions/ADR-007-adaptive-launcher-icon.md) | Accepted — finished PNG as adaptive foreground |
 | [decisions/ADR-008-address-geocoding.md](decisions/ADR-008-address-geocoding.md) | Accepted — opt-in Nominatim geocoding |
+| [decisions/ADR-009-rich-link-meta-extractors.md](decisions/ADR-009-rich-link-meta-extractors.md) | Accepted — allowlisted HTML meta for rich links |
 
 ## Prompts
 
@@ -48,6 +50,7 @@ demo narrative, not runtime documentation.
 | [prompts/02-next-steps.md](prompts/02-next-steps.md) | Specs 001–003 implementation |
 | [prompts/03-screenshot-tests-and-showcase.md](prompts/03-screenshot-tests-and-showcase.md) | Screenshot tests, CI artifacts, README showcase |
 | [prompts/04-local-analysis-history.md](prompts/04-local-analysis-history.md) | Spec 006 local history implementation |
+| [prompts/05-rich-link-extractors.md](prompts/05-rich-link-extractors.md) | Spec 009 rich-link extractors |
 
 ## Agent guidance
 
@@ -66,6 +69,7 @@ Portable skills:
 - [`.agents/skills/implement-feature/`](../.agents/skills/implement-feature/)
 - [`.agents/skills/android-code-review/`](../.agents/skills/android-code-review/)
 - [`.agents/skills/map-url-parser/`](../.agents/skills/map-url-parser/)
+- [`.agents/skills/rich-link-extractor/`](../.agents/skills/rich-link-extractor/)
 
 ## Contributing
 

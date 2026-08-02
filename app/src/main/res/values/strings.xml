@@ -30,6 +30,10 @@
     <string name="error_resolve_http">The server returned an HTTP error.</string>
     <string name="error_resolve_unknown">Something went wrong while resolving the URL.</string>
     <string name="location_section_label">Location</string>
+    <string name="rich_link_section_label">Link details</string>
+    <string name="rich_link_kind_label">Source: %1$s</string>
+    <string name="rich_link_title_label">Title: %1$s</string>
+    <string name="rich_link_canonical_label">Canonical URL: %1$s</string>
     <string name="provider_label">Provider: %1$s</string>
     <string name="place_label">Place: %1$s</string>
     <string name="address_label">Address: %1$s</string>

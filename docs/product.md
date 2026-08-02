@@ -9,7 +9,8 @@ location information, but coordinates are not always easy to find and copy.
 ## Product promise
 
 Paste or share a link into Linkagram to discover where it leads and, when
-possible, extract place details and coordinates.
+possible, extract place details and coordinates from map links, or a readable
+title summary from allowlisted rich-link hosts (Spec 009).
 
 ## Primary user flows
 
@@ -49,7 +50,15 @@ Expected result:
 - Latitude and longitude, if extractable.
 - One-tap coordinate copy in `lat, lon` format.
 
-### 5. Browse local analysis history
+### 5. Inspect an allowlisted rich link
+
+Expected result (when the host is allowlisted and not a map URL):
+- Rich-link kind (for example KOLEO).
+- Title from `og:title` or `<title>`, cleaned for display.
+- Canonical URL from `og:url` when present.
+- No coordinate copy and no automatic geocoding.
+
+### 6. Browse local analysis history
 
 A user who opts in can reopen previous successful analyses on the same device.
 
@@ -63,6 +72,8 @@ Expected result:
 
 ## Supported providers: initial target
 
+Map URL parsers:
+
 - Google Maps
 - Yandex Maps
 - OpenStreetMap
@@ -70,8 +81,12 @@ Expected result:
 - Organic Maps (`omaps.app` share and map links)
 - Generic URLs containing explicit coordinates
 
-Support should be incremental. Unsupported map URLs must still display the final URL
-and redirect chain.
+Rich-link extractors (title/og meta, Spec 009 / ADR-009):
+
+- KOLEO (`koleo.pl` share and connection links)
+
+Support should be incremental. Unsupported map or rich-link URLs must still
+display the final URL and redirect chain.
 
 When a recognized map URL has place/address metadata but no coordinates, the
 user may tap Find coordinates to look up an approximate pin via OpenStreetMap
@@ -86,6 +101,8 @@ Nominatim (Spec 008 / ADR-008). That lookup is never automatic.
   backup and device transfer. See Spec 006 and ADR-006.
 - No location permission required.
 - The app only accesses URLs explicitly shared, pasted, or entered by the user.
+- For allowlisted rich-link hosts, a capped slice of the final HTML response may
+  be read during resolve to extract title/og tags (Spec 009 / ADR-009).
 - Opt-in Nominatim geocoding may send place/address text to OpenStreetMap after
   an explicit tap (Spec 008 / ADR-008); results are labelled approximate and are
   not written into history.

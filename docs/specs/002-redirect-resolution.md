@@ -30,10 +30,14 @@ A URL received from:
 - Apply connect/read/call timeouts.
 - Do not execute JavaScript.
 - Do not use WebView.
+- On a final 2xx response, if a `MetaCapturePolicy` allowlists the host, read at
+  most 256 KiB of the body and attach optional `PageMeta` (`title`, `og:title`,
+  `og:url`) to `Success`. Non-allowlisted hosts discard the body as before.
+  See Spec 009 / ADR-009.
 
 ## Result states
 
-- Success
+- Success (optional `pageMeta` when the final host is allowlisted)
 - InvalidInput
 - NetworkError
 - Timeout
@@ -51,3 +55,6 @@ A URL received from:
 - Given a redirect loop, the app stops and reports it.
 - Given an invalid URL, no network request is made.
 - Given a timeout, the UI remains usable and shows an error state.
+- Given a final 2xx on an allowlisted host, `Success.pageMeta` may contain
+  title/og tags parsed from a capped body.
+- Given a final 2xx on a non-allowlisted host, no page meta is attached.

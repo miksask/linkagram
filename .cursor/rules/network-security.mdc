@@ -9,6 +9,8 @@ Linkagram processes untrusted external URLs.
 
 - Never use WebView to resolve a URL.
 - Never enable JavaScript for URL processing.
+- Do not scrape HTML for map parsers (Spec 003). Allowlisted title/og meta on
+  the final resolve hop is Spec 009 / ADR-009 only (capped body, allowlist).
 - Keep HTTP redirects disabled in the client; follow them manually.
 - Enforce a redirect limit.
 - Detect redirect loops.

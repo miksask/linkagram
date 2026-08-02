@@ -7,12 +7,14 @@ data class CompletedAnalysis(
     val finalStatusCode: Int,
     val redirectChain: List<RedirectStep>,
     val location: LocationInfo?,
+    val richLink: RichLinkInfo? = null,
     val completedAtMillis: Long,
 )
 
 enum class HistoryResultType {
     Url,
     Map,
+    RichLink,
 }
 
 data class HistoryRedirect(
@@ -31,6 +33,7 @@ data class HistoryEntry(
     val finalStatusCode: Int,
     val resultType: HistoryResultType,
     val provider: MapProvider?,
+    val richLinkKind: RichLinkKind? = null,
     val placeName: String?,
     val address: String?,
     val latitude: Double?,

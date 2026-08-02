@@ -86,6 +86,10 @@ Requirements:
 
 Add focused unit tests for every supported provider and for generic coordinate extraction.
 
+Later work (Spec 009 / ADR-009) adds allowlisted rich-link title/og extractors
+as a parallel category to map parsers. See `docs/prompts/05-rich-link-extractors.md`
+and the `rich-link-extractor` skill. Do not scrape HTML inside map parsers.
+
 # Implementation Guidelines
 
 * Work incrementally and keep the project buildable after each step.

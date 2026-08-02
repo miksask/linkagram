@@ -57,6 +57,7 @@ Cover at least:
 * analyzing
 * validation error
 * success with coordinates and copy action
+* success with KOLEO rich-link title (Spec 009), when that feature exists
 * resolve error with a partial redirect chain
 * long URL that wraps rather than truncates
 * dark theme

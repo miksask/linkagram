@@ -32,6 +32,7 @@ import io.github.miksask.linkagram.core.clipboard.ClipboardUrlReader
 import io.github.miksask.linkagram.domain.LocationInfo
 import io.github.miksask.linkagram.domain.MapProvider
 import io.github.miksask.linkagram.domain.RedirectStep
+import io.github.miksask.linkagram.domain.RichLinkInfo
 import io.github.miksask.linkagram.ui.theme.LinkagramTheme
 
 @Composable
@@ -160,6 +161,9 @@ fun AnalysisScreenContent(
                 onFindCoordinates = onFindCoordinates,
             )
         }
+        state.richLink?.let { richLink ->
+            RichLinkSection(richLink = richLink)
+        }
         if (state.redirectChain.isNotEmpty()) {
             Text(
                 text = stringResource(R.string.redirect_chain_label),
@@ -168,6 +172,30 @@ fun AnalysisScreenContent(
             state.redirectChain.forEachIndexed { index, step ->
                 RedirectStepRow(index = index + 1, step = step)
             }
+        }
+    }
+}
+
+@Composable
+private fun RichLinkSection(richLink: RichLinkInfo) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.rich_link_section_label),
+            style = MaterialTheme.typography.labelLarge,
+        )
+        Text(
+            text = stringResource(R.string.rich_link_kind_label, richLink.kind.displayName),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = stringResource(R.string.rich_link_title_label, richLink.title),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        richLink.canonicalUrl?.let { url ->
+            Text(
+                text = stringResource(R.string.rich_link_canonical_label, url),
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }

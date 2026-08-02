@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.miksask.linkagram.core.url.InvalidUrlReason
 import io.github.miksask.linkagram.core.url.UrlNormalizationResult
 import io.github.miksask.linkagram.core.url.UrlNormalizer
+import io.github.miksask.linkagram.data.extract.RichLinkExtractorRegistry
 import io.github.miksask.linkagram.data.geocoding.NominatimGeocoder
 import io.github.miksask.linkagram.data.history.HistoryRepository
 import io.github.miksask.linkagram.data.maps.MapUrlParser
@@ -18,6 +19,8 @@ import io.github.miksask.linkagram.domain.LocationInfo
 import io.github.miksask.linkagram.domain.MapParseResult
 import io.github.miksask.linkagram.domain.RedirectStep
 import io.github.miksask.linkagram.domain.ResolveResult
+import io.github.miksask.linkagram.domain.RichLinkInfo
+import io.github.miksask.linkagram.domain.RichLinkParseResult
 import java.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +40,7 @@ data class AnalysisUiState(
     val finalStatusCode: Int? = null,
     val redirectChain: List<RedirectStep> = emptyList(),
     val location: LocationInfo? = null,
+    val richLink: RichLinkInfo? = null,
     val coordinatesText: String? = null,
     val coordinatesCopied: Boolean = false,
     val coordinatesAreApproximate: Boolean = false,
@@ -80,6 +84,7 @@ enum class HistorySaveNotice {
 class AnalysisViewModel(
     private val resolveUrl: suspend (String) -> ResolveResult = RedirectResolver()::resolve,
     private val mapUrlParser: MapUrlParser = MapUrlParser(),
+    private val richLinkExtractorRegistry: RichLinkExtractorRegistry = RichLinkExtractorRegistry(),
     private val geocode: suspend (String?, String?) -> GeocodeResult =
         NominatimGeocoder()::geocode,
     private val historyRepository: HistoryRepository? = null,
@@ -217,6 +222,14 @@ class AnalysisViewModel(
             is ResolveResult.Success -> {
                 val parsed = mapUrlParser.parse(result.finalUrl)
                 val location = (parsed as? MapParseResult.Parsed)?.location
+                val richLink = if (location == null) {
+                    (
+                        richLinkExtractorRegistry.parse(result.finalUrl, result.pageMeta)
+                            as? RichLinkParseResult.Parsed
+                        )?.richLink
+                } else {
+                    null
+                }
                 _uiState.update {
                     it.copy(
                         isAnalyzing = false,
@@ -225,6 +238,7 @@ class AnalysisViewModel(
                         redirectChain = result.redirectChain,
                         resolveError = null,
                         location = location,
+                        richLink = richLink,
                         coordinatesText = location?.toCoordinatesText(),
                         coordinatesCopied = false,
                         coordinatesAreApproximate = false,
@@ -239,6 +253,7 @@ class AnalysisViewModel(
                         finalStatusCode = result.finalStatusCode,
                         redirectChain = result.redirectChain,
                         location = location,
+                        richLink = richLink,
                         completedAtMillis = clock.millis(),
                     ),
                 )
@@ -296,6 +311,7 @@ class AnalysisViewModel(
                         redirectChain = result.redirectChain,
                         resolveError = ResolveError.Http,
                         location = location,
+                        richLink = null,
                         coordinatesText = location?.toCoordinatesText(),
                         coordinatesAreApproximate = false,
                         geocodeState = initialGeocodeState(location),
@@ -338,6 +354,7 @@ class AnalysisViewModel(
             finalStatusCode = null,
             redirectChain = emptyList(),
             location = null,
+            richLink = null,
             coordinatesText = null,
             coordinatesCopied = false,
             coordinatesAreApproximate = false,
@@ -375,6 +392,7 @@ class AnalysisViewModel(
     class Factory(
         private val resolveUrl: suspend (String) -> ResolveResult,
         private val mapUrlParser: MapUrlParser,
+        private val richLinkExtractorRegistry: RichLinkExtractorRegistry,
         private val geocode: suspend (String?, String?) -> GeocodeResult,
         private val historyRepository: HistoryRepository,
     ) : ViewModelProvider.Factory {
@@ -384,6 +402,7 @@ class AnalysisViewModel(
                 return AnalysisViewModel(
                     resolveUrl = resolveUrl,
                     mapUrlParser = mapUrlParser,
+                    richLinkExtractorRegistry = richLinkExtractorRegistry,
                     geocode = geocode,
                     historyRepository = historyRepository,
                 ) as T

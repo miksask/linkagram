@@ -6,7 +6,9 @@ import io.github.miksask.linkagram.data.history.HistoryRedirectEntity
 import io.github.miksask.linkagram.data.history.HistoryRepository
 import io.github.miksask.linkagram.data.history.HistorySettingsRepository
 import io.github.miksask.linkagram.domain.GeocodeResult
+import io.github.miksask.linkagram.domain.PageMeta
 import io.github.miksask.linkagram.domain.ResolveResult
+import io.github.miksask.linkagram.domain.RichLinkKind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -123,6 +125,48 @@ class AnalysisViewModelTest {
             assertEquals(55.75, viewModel.uiState.value.location?.latitude)
             assertEquals(GeocodeState.Unavailable, viewModel.uiState.value.geocodeState)
             assertFalse(viewModel.uiState.value.coordinatesAreApproximate)
+            assertNull(viewModel.uiState.value.richLink)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun analyze_koleoUrl_extractsRichLinkWithoutGeocode() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = AnalysisViewModel(
+                resolveUrl = {
+                    ResolveResult.Success(
+                        finalUrl = "https://koleo.pl/connection/abc",
+                        finalStatusCode = 200,
+                        redirectChain = emptyList(),
+                        pageMeta = PageMeta(
+                            ogTitle = "PKP A 01-01-2026 10:00 > B 01-01-2026 11:00 >> KOLEO",
+                            ogUrl = "https://koleo.pl/connection/abc",
+                        ),
+                    )
+                },
+                ioDispatcher = dispatcher,
+            )
+            viewModel.onDraftUrlChanged("https://koleo.pl/p/1")
+
+            viewModel.analyze()
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.location)
+            assertEquals(RichLinkKind.Koleo, viewModel.uiState.value.richLink?.kind)
+            assertEquals(
+                "PKP A 01-01-2026 10:00 > B 01-01-2026 11:00",
+                viewModel.uiState.value.richLink?.title,
+            )
+            assertEquals(
+                "https://koleo.pl/connection/abc",
+                viewModel.uiState.value.richLink?.canonicalUrl,
+            )
+            assertNull(viewModel.uiState.value.coordinatesText)
+            assertEquals(GeocodeState.Unavailable, viewModel.uiState.value.geocodeState)
         } finally {
             Dispatchers.resetMain()
         }

@@ -7,6 +7,8 @@ import com.android.tools.screenshot.PreviewTest
 import io.github.miksask.linkagram.domain.LocationInfo
 import io.github.miksask.linkagram.domain.MapProvider
 import io.github.miksask.linkagram.domain.RedirectStep
+import io.github.miksask.linkagram.domain.RichLinkInfo
+import io.github.miksask.linkagram.domain.RichLinkKind
 import io.github.miksask.linkagram.ui.theme.LinkagramTheme
 
 @PreviewTest
@@ -67,6 +69,40 @@ fun AnalysisScreenSuccessCoordinatesPreview() {
     LinkagramTheme {
         AnalysisScreenContent(
             state = successState(),
+            onDraftUrlChanged = {},
+            onAnalyze = {},
+            onPasteFromClipboard = {},
+            onCopyCoordinates = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, name = "success_rich_link_koleo")
+@Composable
+fun AnalysisScreenSuccessRichLinkKoleoPreview() {
+    LinkagramTheme {
+        AnalysisScreenContent(
+            state = richLinkSuccessState(),
+            onDraftUrlChanged = {},
+            onAnalyze = {},
+            onPasteFromClipboard = {},
+            onCopyCoordinates = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    showBackground = true,
+    name = "success_rich_link_koleo_dark",
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+)
+@Composable
+fun AnalysisScreenSuccessRichLinkKoleoDarkPreview() {
+    LinkagramTheme(darkTheme = true) {
+        AnalysisScreenContent(
+            state = richLinkSuccessState(),
             onDraftUrlChanged = {},
             onAnalyze = {},
             onPasteFromClipboard = {},
@@ -229,4 +265,22 @@ private fun successState(): AnalysisUiState = AnalysisUiState(
         longitude = 37.6173,
     ),
     coordinatesText = "55.755826, 37.6173",
+)
+
+private fun richLinkSuccessState(): AnalysisUiState = AnalysisUiState(
+    draftUrl = "https://koleo.pl/p/6632331672",
+    finalUrl = "https://koleo.pl/connection/2747f783-020b-5132-bd3c-306811a48739",
+    finalStatusCode = 200,
+    redirectChain = listOf(
+        RedirectStep(
+            fromUrl = "https://koleo.pl/p/6632331672",
+            toUrl = "https://koleo.pl/connection/2747f783-020b-5132-bd3c-306811a48739",
+            statusCode = 302,
+        ),
+    ),
+    richLink = RichLinkInfo(
+        kind = RichLinkKind.Koleo,
+        title = "PKP Warszawa Centralna 02-08-2026 04:12 > Łódź Fabryczna 02-08-2026 05:44",
+        canonicalUrl = "https://koleo.pl/connection/2747f783-020b-5132-bd3c-306811a48739",
+    ),
 )

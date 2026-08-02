@@ -26,8 +26,11 @@ The final URL from redirect resolution (or a normalized direct URL).
 - Validate latitude ∈ [-90, 90] and longitude ∈ [-180, 180].
 - Return partial results when only some fields are available.
 - Support copying coordinates as `lat, lon`.
-- Never scrape HTML, never use WebView/JS/Maps SDK.
+- Never scrape HTML for map parsing, never use WebView/JS/Maps SDK.
+  Allowlisted HTML meta for non-map rich links is Spec 009 / ADR-009 only and
+  must not be used by map parsers.
 - If parsing fails, the UI still shows the final URL and redirect chain.
+  Rich-link extraction may still run afterward (Spec 009).
 
 ## Supported patterns (initial)
 
@@ -103,4 +106,5 @@ The final URL from redirect resolution (or a normalized direct URL).
 ## Notes
 
 Opt-in address geocoding for place URLs that carry no coordinates is specified
-in [008-address-geocoding.md](008-address-geocoding.md).
+in [008-address-geocoding.md](008-address-geocoding.md). Allowlisted title/og
+extraction for non-map share links is [009-rich-link-extraction.md](009-rich-link-extraction.md).

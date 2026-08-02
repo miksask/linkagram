@@ -37,6 +37,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.miksask.linkagram.R
+import io.github.miksask.linkagram.data.extract.RichLinkExtractorRegistry
 import io.github.miksask.linkagram.data.history.HistoryRepository
 import io.github.miksask.linkagram.data.maps.MapUrlParser
 import io.github.miksask.linkagram.domain.GeocodeResult
@@ -60,6 +61,7 @@ import kotlinx.coroutines.launch
 fun LinkagramApp(
     resolveUrl: suspend (String) -> ResolveResult,
     mapUrlParser: MapUrlParser,
+    richLinkExtractorRegistry: RichLinkExtractorRegistry,
     geocode: suspend (String?, String?) -> GeocodeResult,
     historyRepository: HistoryRepository,
     pendingIncomingUrl: String?,
@@ -73,8 +75,20 @@ fun LinkagramApp(
     val showBottomBar = currentRoute == LinkagramDestinations.ANALYZE ||
         currentRoute == LinkagramDestinations.HISTORY
 
-    val analysisFactory = remember(resolveUrl, mapUrlParser, geocode, historyRepository) {
-        AnalysisViewModel.Factory(resolveUrl, mapUrlParser, geocode, historyRepository)
+    val analysisFactory = remember(
+        resolveUrl,
+        mapUrlParser,
+        richLinkExtractorRegistry,
+        geocode,
+        historyRepository,
+    ) {
+        AnalysisViewModel.Factory(
+            resolveUrl,
+            mapUrlParser,
+            richLinkExtractorRegistry,
+            geocode,
+            historyRepository,
+        )
     }
     val analysisViewModel: AnalysisViewModel = viewModel(factory = analysisFactory)
     val historyViewModel: HistoryViewModel = viewModel(

@@ -15,8 +15,9 @@ Linkagram is an Android application that accepts a URL from:
 - Clipboard
 - Manual input
 
-The application resolves shortened URLs, displays redirect chains, and extracts
-location metadata and coordinates from map-related links.
+The application resolves shortened URLs, displays redirect chains, extracts
+location metadata and coordinates from map-related links, and extracts title
+summaries from allowlisted rich-link hosts (Spec 009).
 
 This is a public GitHub demo project. The primary goal is to demonstrate
 AI-assisted development of a Kotlin/Android application by an engineer whose
@@ -36,6 +37,7 @@ Task-specific workflows live in `.agents/skills/`. Use them when relevant:
 - `implement-feature` — implementing a feature from a spec
 - `android-code-review` — reviewing Android/Kotlin changes
 - `map-url-parser` — adding or changing a map URL parser
+- `rich-link-extractor` — allowlisted title/og rich-link extractors
 
 ## Core product behavior
 
@@ -51,6 +53,8 @@ Task-specific workflows live in `.agents/skills/`. Use them when relevant:
    - latitude
    - longitude
 7. Allow copying coordinates in `lat, lon` format.
+8. When the URL is not a map link but the host is allowlisted, extract a
+   rich-link title summary from HTML meta (Spec 009).
 
 ## Non-goals
 

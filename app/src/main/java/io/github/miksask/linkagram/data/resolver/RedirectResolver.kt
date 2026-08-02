@@ -1,5 +1,9 @@
 package io.github.miksask.linkagram.data.resolver
 
+import io.github.miksask.linkagram.data.extract.HtmlMetaParser
+import io.github.miksask.linkagram.data.extract.MetaCapturePolicy
+import io.github.miksask.linkagram.data.extract.RichLinkHostAllowlist
+import io.github.miksask.linkagram.domain.PageMeta
 import io.github.miksask.linkagram.domain.RedirectStep
 import io.github.miksask.linkagram.domain.ResolveResult
 import kotlinx.coroutines.CancellationException
@@ -13,14 +17,18 @@ import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
 import java.io.InterruptedIOException
+import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.math.min
 
 class RedirectResolver(
     private val client: OkHttpClient = defaultClient(),
     private val maxRedirects: Int = DEFAULT_MAX_REDIRECTS,
+    private val metaCapturePolicy: MetaCapturePolicy = RichLinkHostAllowlist,
+    private val maxMetaBodyBytes: Int = DEFAULT_MAX_META_BODY_BYTES,
 ) {
     suspend fun resolve(url: String): ResolveResult {
         val trimmed = url.trim()
@@ -84,10 +92,12 @@ class RedirectResolver(
                     }
 
                     if (code in 200..299) {
+                        val pageMeta = capturePageMeta(current.host, response)
                         return ResolveResult.Success(
                             finalUrl = currentString,
                             finalStatusCode = code,
                             redirectChain = chain.toList(),
+                            pageMeta = pageMeta,
                         )
                     }
 
@@ -128,8 +138,23 @@ class RedirectResolver(
             ),
         )
 
+    private fun capturePageMeta(host: String?, response: Response): PageMeta? {
+        if (!metaCapturePolicy.shouldCapture(host)) return null
+        val body = response.body
+        val source = body.source()
+        source.request(maxMetaBodyBytes.toLong())
+        val buffer = source.buffer
+        val toRead = min(buffer.size, maxMetaBodyBytes.toLong())
+        if (toRead <= 0L) return null
+        val charset: Charset = body.contentType()?.charset(Charsets.UTF_8) ?: Charsets.UTF_8
+        val html = buffer.clone().readString(toRead, charset)
+        val meta = HtmlMetaParser.parse(html)
+        return meta.takeUnless { it.isEmpty }
+    }
+
     companion object {
         const val DEFAULT_MAX_REDIRECTS = 10
+        const val DEFAULT_MAX_META_BODY_BYTES = 256 * 1024
         private const val USER_AGENT = "Linkagram/0.1"
         private val REDIRECT_CODES = setOf(301, 302, 303, 307, 308)
         private val SCHEME_REGEX = Regex("""^([a-zA-Z][a-zA-Z0-9+.-]*):""")

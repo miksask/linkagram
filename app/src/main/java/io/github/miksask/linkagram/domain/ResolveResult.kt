@@ -11,6 +11,7 @@ sealed interface ResolveResult {
         val finalUrl: String,
         val finalStatusCode: Int,
         val redirectChain: List<RedirectStep>,
+        val pageMeta: PageMeta? = null,
     ) : ResolveResult
 
     data object InvalidInput : ResolveResult

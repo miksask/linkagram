@@ -1,5 +1,6 @@
 package io.github.miksask.linkagram.data.resolver
 
+import io.github.miksask.linkagram.data.extract.MetaCapturePolicy
 import io.github.miksask.linkagram.domain.ResolveResult
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
@@ -9,6 +10,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -17,12 +19,13 @@ import java.util.concurrent.TimeUnit
 class RedirectResolverTest {
     private lateinit var server: MockWebServer
     private lateinit var resolver: RedirectResolver
+    private lateinit var client: OkHttpClient
 
     @Before
     fun setUp() {
         server = MockWebServer()
         server.start()
-        val client = OkHttpClient.Builder()
+        client = OkHttpClient.Builder()
             .followRedirects(false)
             .followSslRedirects(false)
             .connectTimeout(2, TimeUnit.SECONDS)
@@ -47,6 +50,36 @@ class RedirectResolverTest {
         assertEquals(server.url("/final").toString(), success.finalUrl)
         assertEquals(200, success.finalStatusCode)
         assertTrue(success.redirectChain.isEmpty())
+        assertNull(success.pageMeta)
+    }
+
+    @Test
+    fun allowlistedHost_attachesPageMetaFromBody() = runBlocking {
+        val allowAll = MetaCapturePolicy { true }
+        val capturingResolver = RedirectResolver(
+            client = client,
+            maxRedirects = 10,
+            metaCapturePolicy = allowAll,
+        )
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(
+                    """
+                    <html><head>
+                    <title>Fallback</title>
+                    <meta property="og:title" content="Trip A > Trip B >> KOLEO" />
+                    <meta property="og:url" content="https://koleo.pl/connection/x" />
+                    </head></html>
+                    """.trimIndent(),
+                ),
+        )
+
+        val success = capturingResolver.resolve(server.url("/p/1").toString()) as ResolveResult.Success
+
+        assertEquals("Fallback", success.pageMeta?.title)
+        assertEquals("Trip A > Trip B >> KOLEO", success.pageMeta?.ogTitle)
+        assertEquals("https://koleo.pl/connection/x", success.pageMeta?.ogUrl)
     }
 
     @Test

@@ -15,9 +15,10 @@ io.github.miksask.linkagram/
 ├── data/
 │   ├── history/     Room DB, DAO, HistoryRepository, DataStore settings
 │   ├── maps/        MapUrlParser + one parser per provider
+│   ├── extract/     Rich-link registry, KOLEO title/og extractor, HtmlMetaParser
 │   ├── geocoding/   NominatimGeocoder — opt-in address lookup
 │   └── resolver/    RedirectResolver — manual HTTP redirect following
-├── domain/          LocationInfo, ResolveResult, GeocodeResult, HistoryEntry
+├── domain/          LocationInfo, RichLinkInfo, ResolveResult, GeocodeResult, HistoryEntry
 └── ui/
     ├── analysis/    AnalysisScreen, AnalysisViewModel
     ├── history/     HistoryScreen, HistoryDetailsScreen, ViewModels
@@ -39,9 +40,12 @@ flowchart TD
     AnalysisVM["AnalysisViewModel"] --> Normalizer["UrlNormalizer"]
     Normalizer -->|"InvalidUrl"| AnalysisState["AnalysisUiState"]
     Normalizer -->|"NormalizedUrl"| Resolver["RedirectResolver"]
-    Resolver -->|"ResolveResult"| Parser["MapUrlParser"]
-    Parser --> AnalysisState
+    Resolver -->|"ResolveResult + optional PageMeta"| Parser["MapUrlParser"]
+    Parser -->|"Parsed"| AnalysisState
+    Parser -->|"Unsupported"| Rich["RichLinkExtractorRegistry"]
+    Rich --> AnalysisState
     Parser -->|"Success snapshot"| HistoryRepo["HistoryRepository"]
+    Rich -->|"Success snapshot"| HistoryRepo
     AnalysisVM -->|"user tap"| Geocoder["NominatimGeocoder"]
     Geocoder --> AnalysisState
     HistoryRepo --> RoomDB["Room + DataStore"]
@@ -55,10 +59,13 @@ flowchart TD
 ## Rules
 
 - The UI layer contains no URL processing or SQL; it renders immutable UI state.
-- `RedirectResolver`, map parsers, geocoder, and history date/search helpers stay
-  free of Compose so they are unit-testable on the JVM.
+- `RedirectResolver`, map parsers, rich-link extractors, geocoder, and history
+  date/search helpers stay free of Compose so they are unit-testable on the JVM.
 - Map parsers never perform network requests. They parse the final URL only.
-- Geocoding runs only after an explicit user tap (Spec 008 / ADR-008).
+- Rich-link extractors may use `PageMeta` captured on allowlisted final hops
+  during resolve (Spec 009 / ADR-009); they do not scrape SPA/JSON payloads.
+- Geocoding runs only after an explicit user tap (Spec 008 / ADR-008) and only
+  for map location results.
 - `HistoryRepository` / `HistorySettingsRepository` are the only justified
   data-access seams for Spec 006. No DI framework; `AppContainer` holds
   singletons and ViewModel factories.
@@ -71,6 +78,8 @@ flowchart TD
 class AnalysisViewModel(
     private val resolveUrl: suspend (String) -> ResolveResult = RedirectResolver()::resolve,
     private val mapUrlParser: MapUrlParser = MapUrlParser(),
+    private val richLinkExtractorRegistry: RichLinkExtractorRegistry =
+        RichLinkExtractorRegistry(),
     private val geocode: suspend (String?, String?) -> GeocodeResult =
         NominatimGeocoder()::geocode,
     private val historyRepository: HistoryRepository? = null,

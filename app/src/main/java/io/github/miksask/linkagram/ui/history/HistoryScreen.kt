@@ -366,11 +366,20 @@ private fun HistoryRow(
             entry.coordinatesText?.let {
                 Text(text = it, style = MaterialTheme.typography.bodySmall)
             }
-            entry.provider?.let {
-                Text(
-                    text = stringResource(R.string.provider_label, it.name),
-                    style = MaterialTheme.typography.bodySmall,
-                )
+            when (entry.resultType) {
+                HistoryResultType.Map -> entry.provider?.let {
+                    Text(
+                        text = stringResource(R.string.provider_label, it.name),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                HistoryResultType.RichLink -> entry.richLinkKind?.let {
+                    Text(
+                        text = stringResource(R.string.rich_link_kind_label, it.displayName),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                HistoryResultType.Url -> Unit
             }
             Text(
                 text = stringResource(

@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
                     LinkagramApp(
                         resolveUrl = container.redirectResolver::resolve,
                         mapUrlParser = container.mapUrlParser,
+                        richLinkExtractorRegistry = container.richLinkExtractorRegistry,
                         geocode = container.nominatimGeocoder::geocode,
                         historyRepository = container.historyRepository,
                         pendingIncomingUrl = url,
