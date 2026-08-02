@@ -5,7 +5,6 @@ import io.github.miksask.linkagram.domain.MapParseResult
 import io.github.miksask.linkagram.domain.MapProvider
 import okhttp3.HttpUrl
 import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 internal object OrganicMapsParser : MapProviderParser {
     private val reservedFirstSegments = setOf(
@@ -82,8 +81,10 @@ internal object OrganicMapsParser : MapProviderParser {
      * are already percent-decoded, but query values may still need decoding.
      */
     private fun normalizeName(raw: String): String? {
+        // String charset overload is available below API 33; Charset overload is not.
         val decoded = runCatching {
-            URLDecoder.decode(raw, StandardCharsets.UTF_8)
+            @Suppress("DEPRECATION")
+            URLDecoder.decode(raw, "UTF-8")
         }.getOrDefault(raw)
         val normalized = decoded.replace('_', ' ').replace('+', ' ').trim()
         return normalized.takeIf { it.isNotEmpty() }
