@@ -7,6 +7,10 @@ metadata and coordinates from map links.
 APKs are published to GitHub Releases when a `v*` tag is pushed.
 
 <p align="center">
+  <img src="docs/images/linkagram-icon.png" alt="Linkagram app icon" width="120" />
+</p>
+
+<p align="center">
   <img src="docs/images/analysis-idle.png" alt="Idle analysis screen" width="180" />
   <img src="docs/images/analysis-analyzing.png" alt="Analyzing state" width="180" />
   <img src="docs/images/analysis-success.png" alt="Success with coordinates" width="180" />
@@ -30,6 +34,8 @@ Runnable Android/Compose app with:
 - One-tap copy of coordinates as `lat, lon` (Spec 005)
 - Opt-in local analysis history with search, date filters, and delete/undo
   (Spec 006 / ADR-006); off by default, Room + DataStore, excluded from backup
+- Brand adaptive launcher icon with themed monochrome layer (Spec 007 /
+  ADR-007)
 - Host-side Compose preview screenshot tests (ADR-005)
 - Unit tests and GitHub Actions CI (`test`, `lint`, `validateDebugScreenshotTest`,
   `assembleDebug`), with screenshot reports and the debug APK uploaded as artifacts

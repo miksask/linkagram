@@ -21,13 +21,13 @@ build/
 # Gradle
 .gradle/
 local.properties
-# .env-vars.local
 gradle-app.setting
 !gradle-wrapper.jar
 .gradletasknamecache
 
-# Android Studio / IntelliJ
+# Android Studio / IntelliJ / VS Code
 .idea/
+.vscode/
 *.iml
 *.iws
 *.ipr
@@ -42,13 +42,19 @@ obj/
 .DS_Store
 Thumbs.db
 
-# Keystore files
+# Keystore / signing
 *.jks
 *.keystore
+keystore.properties
+signing.properties
 
-# Log files
+# Log / crash dumps
 *.log
+*.hprof
 
 # Kotlin
 .kotlin/
-inputs
+
+# Local scratch / working assets (do not commit)
+inputs/
+TMP-*

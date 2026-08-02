@@ -20,6 +20,7 @@ Index of product docs, specs, and architecture decisions.
 | [specs/004-location-details.md](specs/004-location-details.md) | Accepted — result presentation |
 | [specs/005-clipboard.md](specs/005-clipboard.md) | Accepted — clipboard read and copy |
 | [specs/006-local-analysis-history.md](specs/006-local-analysis-history.md) | Accepted — opt-in local analysis history |
+| [specs/007-launcher-icon.md](specs/007-launcher-icon.md) | Accepted — brand adaptive launcher icon |
 
 ## Decisions
 
@@ -32,6 +33,7 @@ Index of product docs, specs, and architecture decisions.
 | [decisions/ADR-004-privacy-and-networking.md](decisions/ADR-004-privacy-and-networking.md) | Accepted — cleartext allowed, TLS untouched; persistence carve-out in ADR-006 |
 | [decisions/ADR-005-screenshot-testing.md](decisions/ADR-005-screenshot-testing.md) | Accepted — Compose Preview Screenshot Testing |
 | [decisions/ADR-006-local-analysis-history-storage.md](decisions/ADR-006-local-analysis-history-storage.md) | Accepted — Room + DataStore for local history |
+| [decisions/ADR-007-adaptive-launcher-icon.md](decisions/ADR-007-adaptive-launcher-icon.md) | Accepted — adaptive + monochrome launcher icon |
 
 ## Prompts
 
