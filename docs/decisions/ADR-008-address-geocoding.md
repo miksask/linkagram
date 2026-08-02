@@ -25,9 +25,10 @@ be an explicit, privacy-conscious choice.
 Add an opt-in "Find coordinates" action that queries OpenStreetMap Nominatim
 (`search?format=jsonv2&limit=1`) with a progressive query trim (full
 `place, address`, then drop leading comma-separated components). Results are
-labelled approximate. The lookup runs only after a user tap, uses its own
-OkHttp client with a descriptive User-Agent, and never writes geocoded
-coordinates into local history.
+labelled approximate. The lookup runs only after a user tap and uses its own
+OkHttp client with a descriptive User-Agent. When the analysis was saved to
+local history, a successful geocode updates that existing row’s latitude and
+longitude in place so history details can copy the pin without re-analysing.
 
 ## Consequences
 
@@ -35,14 +36,16 @@ Advantages:
 
 - place-only Google Maps short links can still yield copyable coordinates;
 - no Google API key, no Maps SDK, no HTML/JS scraping;
-- privacy cost is visible and user-initiated.
+- privacy cost is visible and user-initiated;
+- geocoded pins survive in opt-in history without a second Analyze.
 
 Trade-offs:
 
 - each lookup sends place/address text to Nominatim;
 - results are approximate and may miss or mismatch the intended pin;
 - Nominatim rate limits and availability become a soft dependency for this
-  optional path.
+  optional path;
+- history snapshots may gain coordinates after the original save time.
 
 ## Alternatives considered
 

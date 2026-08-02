@@ -50,13 +50,18 @@ cancellations, or partial rows. Decide whether to save immediately before the
 atomic insert, using the current toggle value. Identical URLs always create a
 new row; never merge or overwrite.
 
+After a successful opt-in geocode (Spec 008) for that same analysis, update the
+just-saved row’s `latitude` / `longitude` in place. Do not create a second row
+for the geocode alone.
+
 ### History screen
 
 Bottom-nav destination **History**, newest first. List rows show shortened
 source and final URLs, place, address, coordinates, provider, completion time,
 and redirect count. Tapping a row opens details by `historyEntryId` only — no
-network request. Details show the saved snapshot and **Analyze again**, which
-starts a new analysis of the source URL. A new success creates a new row.
+network request. Details show the saved snapshot, **Copy coordinates** when
+lat/lon are present (Spec 005), and **Analyze again**, which starts a new
+analysis of the source URL. A new success creates a new row.
 
 States: loading; empty; history disabled and empty; populated list; no search
 matches; no filter matches; local read error. Disabled-with-existing-rows still

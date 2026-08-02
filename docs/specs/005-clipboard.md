@@ -34,6 +34,8 @@ Accepted
 - Use the label `coordinates` for the clip.
 - Give visible confirmation that the copy happened.
 - Copy nothing when coordinates are absent; the action is not shown then.
+- Offer the same copy action on history details when the saved snapshot has
+  coordinates (Spec 006), not only on the live analysis result.
 
 ## Non-requirements
 
@@ -60,6 +62,8 @@ Accepted
 - Given blank clipboard text, tapping paste shows the empty-input error.
 - Given a successful analysis with coordinates, tapping copy places
   `lat, lon` on the clipboard and the button confirms the copy.
+- Given a history details snapshot with coordinates, tapping copy places
+  `lat, lon` on the clipboard and the button confirms the copy.
 - Given no coordinates, no copy action is shown.
 
 ## Test expectations
@@ -71,4 +75,4 @@ Accepted
 ## Notes
 
 Reading lives in `core/clipboard/ClipboardUrlReader.kt`; writing is done by the
-analysis screen through `ClipboardManager`.
+analysis and history-details screens through `ClipboardManager`.

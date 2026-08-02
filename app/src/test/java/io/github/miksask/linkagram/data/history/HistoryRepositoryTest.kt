@@ -3,6 +3,8 @@ package io.github.miksask.linkagram.data.history
 import io.github.miksask.linkagram.domain.CompletedAnalysis
 import io.github.miksask.linkagram.domain.HistoryQuery
 import io.github.miksask.linkagram.domain.HistorySaveResult
+import io.github.miksask.linkagram.domain.LocationInfo
+import io.github.miksask.linkagram.domain.MapProvider
 import io.github.miksask.linkagram.domain.RedirectStep
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -12,6 +14,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -106,7 +109,44 @@ class HistoryRepositoryTest {
         assertEquals(listOf(5L, 3L, 1L), entries.map { it.completedAtMillis })
     }
 
-    private fun sampleAnalysis(completedAt: Long) = CompletedAnalysis(
+    @Test
+    fun updateCoordinates_fillsLatLonOnSavedEntry() = runTest {
+        val dao = InMemoryHistoryDao()
+        val repository = HistoryRepository(
+            dao = dao,
+            settings = FakeSettings(true),
+            ioDispatcher = UnconfinedTestDispatcher(testScheduler),
+        )
+        val saved = repository.saveIfEnabled(
+            sampleAnalysis(
+                completedAt = 1,
+                location = LocationInfo(
+                    provider = MapProvider.GoogleMaps,
+                    placeName = "Centrum",
+                    address = "Street 1",
+                ),
+            ),
+        ) as HistorySaveResult.Saved
+
+        assertNull(dao.entries.getValue(saved.entryId).latitude)
+        assertTrue(
+            repository.updateCoordinates(
+                entryId = saved.entryId,
+                latitude = 51.7554125,
+                longitude = 19.4463773,
+            ),
+        )
+
+        val updated = repository.getEntry(saved.entryId)!!
+        assertEquals(51.7554125, updated.latitude)
+        assertEquals(19.4463773, updated.longitude)
+        assertEquals("51.7554125, 19.4463773", updated.coordinatesText)
+    }
+
+    private fun sampleAnalysis(
+        completedAt: Long,
+        location: LocationInfo? = null,
+    ) = CompletedAnalysis(
         sourceUrl = "https://example.com/$completedAt",
         normalizedUrl = "https://example.com/$completedAt",
         finalUrl = "https://example.com/final/$completedAt",
@@ -118,7 +158,7 @@ class HistoryRepositoryTest {
                 statusCode = 302,
             ),
         ),
-        location = null,
+        location = location,
         completedAtMillis = completedAt,
     )
 }
@@ -173,6 +213,16 @@ private class InMemoryHistoryDao : HistoryDao {
     ): Flow<Int> = flowOf(entries.size)
 
     override suspend fun getEntry(id: String): HistoryEntryEntity? = entries[id]
+
+    override suspend fun updateCoordinates(
+        id: String,
+        latitude: Double,
+        longitude: Double,
+    ): Int {
+        val existing = entries[id] ?: return 0
+        entries[id] = existing.copy(latitude = latitude, longitude = longitude)
+        return 1
+    }
 
     override suspend fun getRedirects(historyEntryId: String): List<HistoryRedirectEntity> =
         redirects.filter { it.historyEntryId == historyEntryId }.sortedBy { it.ordinal }

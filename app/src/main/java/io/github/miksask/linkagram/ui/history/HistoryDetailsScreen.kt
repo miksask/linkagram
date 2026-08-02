@@ -1,5 +1,8 @@
 package io.github.miksask.linkagram.ui.history
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +18,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,6 +47,7 @@ fun HistoryDetailsScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     LaunchedEffect(state.navigateBack, state.deletedEntry) {
         if (state.navigateBack) {
             state.deletedEntry?.let(onDeleted)
@@ -53,6 +61,10 @@ fun HistoryDetailsScreen(
             state.entry?.sourceUrl?.let(onAnalyzeAgain)
         },
         onDelete = viewModel::delete,
+        onCopyCoordinates = { text ->
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText("coordinates", text))
+        },
         modifier = modifier,
     )
 }
@@ -62,8 +74,13 @@ fun HistoryDetailsScreenContent(
     state: HistoryDetailsUiState,
     onAnalyzeAgain: () -> Unit,
     onDelete: () -> Unit,
+    onCopyCoordinates: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    var coordinatesCopied by remember { mutableStateOf(false) }
+    LaunchedEffect(state.entry?.id) {
+        coordinatesCopied = false
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -119,11 +136,29 @@ fun HistoryDetailsScreenContent(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-                entry.coordinatesText?.let {
+                entry.coordinatesText?.let { text ->
                     Text(
-                        text = stringResource(R.string.coordinates_label, it),
+                        text = stringResource(R.string.coordinates_label, text),
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    Button(
+                        onClick = {
+                            onCopyCoordinates(text)
+                            coordinatesCopied = true
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.operationInProgress,
+                    ) {
+                        Text(
+                            text = stringResource(
+                                if (coordinatesCopied) {
+                                    R.string.coordinates_copied
+                                } else {
+                                    R.string.copy_coordinates
+                                },
+                            ),
+                        )
+                    }
                 }
                 if (entry.redirectChain.isNotEmpty()) {
                     Text(
@@ -211,6 +246,7 @@ private fun HistoryDetailsPreview() {
             ),
             onAnalyzeAgain = {},
             onDelete = {},
+            onCopyCoordinates = {},
         )
     }
 }

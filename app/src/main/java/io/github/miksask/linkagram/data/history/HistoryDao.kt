@@ -90,6 +90,15 @@ interface HistoryDao {
 
     @Query(
         """
+        UPDATE history_entries
+        SET latitude = :latitude, longitude = :longitude
+        WHERE id = :id
+        """,
+    )
+    suspend fun updateCoordinates(id: String, latitude: Double, longitude: Double): Int
+
+    @Query(
+        """
         SELECT * FROM history_redirects
         WHERE history_entry_id = :historyEntryId
         ORDER BY ordinal ASC

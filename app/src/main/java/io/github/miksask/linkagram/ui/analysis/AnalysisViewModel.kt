@@ -91,6 +91,7 @@ class AnalysisViewModel(
 
     private var analyzeJob: Job? = null
     private var geocodeJob: Job? = null
+    private var savedHistoryEntryId: String? = null
 
     fun onDraftUrlChanged(value: String) {
         _uiState.update { clearResults(it.copy(draftUrl = value)) }
@@ -170,7 +171,7 @@ class AnalysisViewModel(
         _uiState.update { it.copy(historySaveNotice = null) }
     }
 
-    private fun applyGeocodeResult(result: GeocodeResult) {
+    private suspend fun applyGeocodeResult(result: GeocodeResult) {
         when (result) {
             is GeocodeResult.Found -> {
                 val text = CoordinateFormatter.format(result.latitude, result.longitude)
@@ -185,6 +186,17 @@ class AnalysisViewModel(
                             longitude = result.longitude,
                         ),
                     )
+                }
+                val entryId = savedHistoryEntryId
+                val repository = historyRepository
+                if (entryId != null && repository != null) {
+                    withContext(ioDispatcher) {
+                        repository.updateCoordinates(
+                            entryId = entryId,
+                            latitude = result.latitude,
+                            longitude = result.longitude,
+                        )
+                    }
                 }
             }
             GeocodeResult.NotFound -> {
@@ -300,19 +312,24 @@ class AnalysisViewModel(
 
     private suspend fun maybeSaveHistory(analysis: CompletedAnalysis) {
         val repository = historyRepository ?: return
-        when (repository.saveIfEnabled(analysis)) {
+        when (val saveResult = repository.saveIfEnabled(analysis)) {
             is HistorySaveResult.Saved -> {
+                savedHistoryEntryId = saveResult.entryId
                 _uiState.update { it.copy(historySaveNotice = HistorySaveNotice.Saved) }
             }
-            HistorySaveResult.SkippedDisabled -> Unit
+            HistorySaveResult.SkippedDisabled -> {
+                savedHistoryEntryId = null
+            }
             is HistorySaveResult.Failed -> {
+                savedHistoryEntryId = null
                 _uiState.update { it.copy(historySaveNotice = HistorySaveNotice.SaveFailed) }
             }
         }
     }
 
-    private fun clearResults(state: AnalysisUiState): AnalysisUiState =
-        state.copy(
+    private fun clearResults(state: AnalysisUiState): AnalysisUiState {
+        savedHistoryEntryId = null
+        return state.copy(
             validationError = null,
             resolveError = null,
             sourceUrl = null,
@@ -327,6 +344,7 @@ class AnalysisViewModel(
             geocodeState = GeocodeState.Unavailable,
             historySaveNotice = null,
         )
+    }
 
     private fun LocationInfo.toCoordinatesText(): String? {
         val lat = latitude ?: return null

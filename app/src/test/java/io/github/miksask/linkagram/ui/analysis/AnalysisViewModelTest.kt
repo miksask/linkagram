@@ -197,6 +197,52 @@ class AnalysisViewModelTest {
     }
 
     @Test
+    fun onFindCoordinates_success_withHistoryEnabled_updatesSavedEntry() = runTest {
+        val dispatcher = UnconfinedTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dao = FakeHistoryDao()
+            val repository = HistoryRepository(
+                dao = dao,
+                settings = FakeHistorySettings(enabled = true),
+                ioDispatcher = dispatcher,
+            )
+            val viewModel = AnalysisViewModel(
+                resolveUrl = {
+                    ResolveResult.Success(
+                        finalUrl =
+                            "https://www.google.com/maps/place/Centrum," +
+                                "+Stefana+%C5%BBeromskiego+115,+90-542+%C5%81%C3%B3d%C5%BA/" +
+                                "data=!4m2!3m1!1s0x471a352808de581d:0x9eac1c1927024e88",
+                        finalStatusCode = 200,
+                        redirectChain = emptyList(),
+                    )
+                },
+                geocode = { _, _ ->
+                    GeocodeResult.Found(latitude = 51.7554125, longitude = 19.4463773)
+                },
+                historyRepository = repository,
+                ioDispatcher = dispatcher,
+            )
+            viewModel.onDraftUrlChanged("https://maps.app.goo.gl/example")
+            viewModel.analyze()
+            advanceUntilIdle()
+
+            assertEquals(1, dao.entries.size)
+            assertNull(dao.entries.values.single().latitude)
+
+            viewModel.onFindCoordinates()
+            advanceUntilIdle()
+
+            val entry = dao.entries.values.single()
+            assertEquals(51.7554125, entry.latitude)
+            assertEquals(19.4463773, entry.longitude)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun onFindCoordinates_notFound_setsGeocodeNotFound() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
@@ -452,6 +498,16 @@ private class FakeHistoryDao : HistoryDao {
     ): Flow<Int> = flowOf(entries.size)
 
     override suspend fun getEntry(id: String): HistoryEntryEntity? = entries[id]
+
+    override suspend fun updateCoordinates(
+        id: String,
+        latitude: Double,
+        longitude: Double,
+    ): Int {
+        val existing = entries[id] ?: return 0
+        entries[id] = existing.copy(latitude = latitude, longitude = longitude)
+        return 1
+    }
 
     override suspend fun getRedirects(historyEntryId: String): List<HistoryRedirectEntity> =
         redirects.filter { it.historyEntryId == historyEntryId }

@@ -84,6 +84,19 @@ class HistoryRepository(
             HistoryMapper.toDomain(entry, redirects)
         }
 
+    /**
+     * Fills lat/lon on an already-saved row (e.g. after opt-in geocode).
+     * Returns true when a row was updated.
+     */
+    suspend fun updateCoordinates(
+        entryId: String,
+        latitude: Double,
+        longitude: Double,
+    ): Boolean =
+        withContext(ioDispatcher) {
+            dao.updateCoordinates(entryId, latitude, longitude) > 0
+        }
+
     suspend fun deleteById(id: String): HistoryEntry? =
         withContext(ioDispatcher) {
             val entry = dao.getEntry(id) ?: return@withContext null

@@ -22,8 +22,10 @@ A parsed `LocationInfo` with at least one of `placeName` or `address` and with
 - Use a single provider: OpenStreetMap Nominatim search API.
 - Label successful results as approximate.
 - Allow copying geocoded coordinates as `lat, lon` (same format as Spec 005).
-- Do not persist geocoded coordinates into local history. History stores the
-  analysis result as resolved at analyze time.
+- When history was saved for this analysis (`HistorySaveResult.Saved`), update
+  that row’s `latitude` / `longitude` after a successful geocode. Do not create
+  a new history row. If history was disabled or save failed, geocode still
+  updates the live analysis UI only.
 - Never scrape HTML, never use WebView/JS, never call a Maps SDK or a paid
   Places API.
 - Surface not-found and network/HTTP failures without clearing the location
@@ -34,7 +36,7 @@ A parsed `LocationInfo` with at least one of `placeName` or `address` and with
 - Automatic geocoding on every analysis.
 - Reverse geocoding.
 - Multiple geocoding providers or user-configurable endpoints.
-- Writing geocoded coordinates back into history entries.
+- Persisting an “approximate” flag on history rows.
 - Offline geocoding.
 
 ## Result states
@@ -59,6 +61,9 @@ A parsed `LocationInfo` with at least one of `placeName` or `address` and with
 - Given exact coordinates already extracted from the URL, the Find coordinates
   button is not shown.
 - Geocoding is never started by `analyze()` alone.
+- Given history enabled and a successful geocode, the saved history row gains
+  the geocoded coordinates and history details can copy them without Analyze
+  again.
 
 ## Notes
 
