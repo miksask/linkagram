@@ -37,6 +37,10 @@ The final URL from redirect resolution (or a normalized direct URL).
 - `https://maps.google.com/?q=lat,lon`
 - `https://www.google.com/maps/search/?api=1&query=lat,lon`
 - Query params `q` / `query` containing `lat,lon`
+- Adjacent `!3d<lat>!4d<lon>` pair inside a `data=` path segment (common after
+  `maps.app.goo.gl` short-link resolution). Precedence: `@` → `!3d/!4d` → `q`/`query`.
+- `/place/<name>,<address>` segments split on the first comma into `placeName`
+  and `address` when both parts are non-empty.
 
 ### Yandex Maps
 
@@ -71,8 +75,18 @@ The final URL from redirect resolution (or a normalized direct URL).
 ## Acceptance criteria
 
 - Given a Google Maps `@lat,lon` URL, coordinates are extracted.
+- Given a Google Maps place URL with `!3d<lat>!4d<lon>` and no `@`, coordinates
+  are extracted.
+- Given a Google Maps place URL with both `@` and `!3d/!4d`, the `@` values win.
+- Given a Google Maps `/place/Name,+Street,+City` URL, `placeName` and `address`
+  are split on the first comma.
 - Given a Yandex `ll=lon,lat` URL, coordinates are extracted in correct order.
 - Given an OSM hash map URL, coordinates are extracted.
 - Given an Apple Maps `ll=lat,lon` URL, coordinates are extracted.
 - Given invalid coordinates (lat=999), parsing does not return those values.
 - Given a non-map URL, analysis still shows the final URL.
+
+## Notes
+
+Opt-in address geocoding for place URLs that carry no coordinates is specified
+in [008-address-geocoding.md](008-address-geocoding.md).

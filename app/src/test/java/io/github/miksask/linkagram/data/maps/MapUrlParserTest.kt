@@ -59,6 +59,29 @@ class MapUrlParserTest(
                 null,
             ),
             arrayOf(
+                "https://www.google.com/maps/place/Politechniczna,+90-001+%D0%9B%D0%BE%D0%B4%D0%B7%D1%8C/" +
+                    "data=!4m6!3m5!1s0x471a35270981de07:0x64b118caf362b246!7e2!8m2!3d51.7528303!4d19.4449704!18m1!1e1",
+                MapProvider.GoogleMaps,
+                51.7528303,
+                19.4449704,
+                "Politechniczna",
+            ),
+            arrayOf(
+                "https://www.google.com/maps/place/Red+Square/@55.7539,37.6208,17z/" +
+                    "data=!3d51.0!4d19.0",
+                MapProvider.GoogleMaps,
+                55.7539,
+                37.6208,
+                "Red Square",
+            ),
+            arrayOf(
+                "https://www.google.com/maps/place/Somewhere/data=!3d999!4d19.0",
+                MapProvider.GoogleMaps,
+                null,
+                null,
+                "Somewhere",
+            ),
+            arrayOf(
                 "https://yandex.ru/maps/?ll=37.62,55.75&text=Moscow",
                 MapProvider.YandexMaps,
                 55.75,
@@ -111,6 +134,40 @@ class MapUrlParserTest(
     }
 }
 
+class GoogleMapsPlaceSplitTest {
+    private val parser = MapUrlParser()
+
+    @Test
+    fun parse_placeWithAddressAndDataCoords_splitsNameAndAddress() {
+        val url =
+            "https://www.google.com/maps/place/Politechniczna,+90-001+%D0%9B%D0%BE%D0%B4%D0%B7%D1%8C/" +
+                "data=!4m6!3m5!1s0x471a35270981de07:0x64b118caf362b246!7e2!8m2!3d51.7528303!4d19.4449704!18m1!1e1"
+        val parsed = parser.parse(url) as MapParseResult.Parsed
+        assertEquals(MapProvider.GoogleMaps, parsed.location.provider)
+        assertEquals("Politechniczna", parsed.location.placeName)
+        assertEquals("90-001 Лодзь", parsed.location.address)
+        assertEquals(51.7528303, parsed.location.latitude)
+        assertEquals(19.4449704, parsed.location.longitude)
+    }
+
+    @Test
+    fun parse_placeWithAddressNoCoords_extractsAddressWithoutCoordinates() {
+        val url =
+            "https://www.google.com/maps/place/Centrum+Kszta%C5%82cenia+Zawodowego+i+Ustawicznego+w+%C5%81odzi," +
+                "+Stefana+%C5%BBeromskiego+115,+90-542+%C5%81%C3%B3d%C5%BA/" +
+                "data=!4m2!3m1!1s0x471a352808de581d:0x9eac1c1927024e88!18m1!1e1"
+        val parsed = parser.parse(url) as MapParseResult.Parsed
+        assertEquals(MapProvider.GoogleMaps, parsed.location.provider)
+        assertEquals(
+            "Centrum Kształcenia Zawodowego i Ustawicznego w Łodzi",
+            parsed.location.placeName,
+        )
+        assertEquals("Stefana Żeromskiego 115, 90-542 Łódź", parsed.location.address)
+        assertNull(parsed.location.latitude)
+        assertNull(parsed.location.longitude)
+    }
+}
+
 class CoordinateFormatterTest {
     @Test
     fun format_latLon() {
@@ -124,5 +181,18 @@ class CoordinateFormatterTest {
     fun invalidCoordinates_rejectedByValidator() {
         assertTrue(!io.github.miksask.linkagram.domain.CoordinateValidator.isValid(999.0, 0.0))
         assertNull(CoordinateParsing.validOrNull(999.0, 0.0))
+    }
+
+    @Test
+    fun findDataCoordinates_extractsAdjacentPair() {
+        assertEquals(
+            51.7528303 to 19.4449704,
+            CoordinateParsing.findDataCoordinates("!8m2!3d51.7528303!4d19.4449704!18m1"),
+        )
+    }
+
+    @Test
+    fun findDataCoordinates_rejectsOutOfRange() {
+        assertNull(CoordinateParsing.findDataCoordinates("!3d999!4d19.0"))
     }
 }

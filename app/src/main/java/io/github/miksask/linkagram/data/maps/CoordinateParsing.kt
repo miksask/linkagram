@@ -28,6 +28,23 @@ internal object CoordinateParsing {
             match.groupValues[2].toDoubleOrNull(),
         )
     }
+
+    /**
+     * Google Maps place URLs encode pin coordinates as an adjacent
+     * `!3d<lat>!4d<lon>` pair inside the `data=` path segment.
+     * Do not match `!1d`/`!2d` — those reverse lat/lon order for directions.
+     */
+    fun findDataCoordinates(text: String): Pair<Double, Double>? {
+        val match = dataCoordinates.find(text) ?: return null
+        return validOrNull(
+            match.groupValues[1].toDoubleOrNull(),
+            match.groupValues[2].toDoubleOrNull(),
+        )
+    }
+
+    private val dataCoordinates = Regex(
+        """!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)""",
+    )
 }
 
 internal fun interface MapProviderParser {

@@ -14,14 +14,17 @@ internal object GoogleMapsParser : MapProviderParser {
             url.fragment?.let { append('#').append(it) }
         }
         val fromAt = CoordinateParsing.findAtCoordinates(pathAndFragment)
+        val fromData = CoordinateParsing.findDataCoordinates(pathAndFragment)
         val queryCandidate = url.queryParameter("q") ?: url.queryParameter("query")
         val fromQuery = queryCandidate?.let { CoordinateParsing.parseLatLonPair(it) }
-        val coords = fromAt ?: fromQuery
+        val coords = fromAt ?: fromData ?: fromQuery
+        val place = extractPlace(url)
 
         return MapParseResult.Parsed(
             LocationInfo(
                 provider = MapProvider.GoogleMaps,
-                placeName = extractPlaceName(url),
+                placeName = place?.name,
+                address = place?.address,
                 latitude = coords?.first,
                 longitude = coords?.second,
             ),
@@ -39,18 +42,29 @@ internal object GoogleMapsParser : MapProviderParser {
         }
     }
 
-    private fun extractPlaceName(url: HttpUrl): String? {
+    private data class PlaceParts(val name: String?, val address: String?)
+
+    private fun extractPlace(url: HttpUrl): PlaceParts? {
         val segments = url.pathSegments.filter { it.isNotBlank() }
         val placeIndex = segments.indexOf("place")
         if (placeIndex >= 0 && placeIndex + 1 < segments.size) {
             val raw = segments[placeIndex + 1]
-            if (!raw.startsWith("@")) {
-                return raw.replace('+', ' ')
+            if (!raw.startsWith("@") && !raw.startsWith("data=")) {
+                val decoded = raw.replace('+', ' ')
+                val commaIndex = decoded.indexOf(',')
+                if (commaIndex > 0 && commaIndex + 1 < decoded.length) {
+                    val name = decoded.substring(0, commaIndex).trim()
+                    val address = decoded.substring(commaIndex + 1).trim()
+                    if (name.isNotEmpty() && address.isNotEmpty()) {
+                        return PlaceParts(name = name, address = address)
+                    }
+                }
+                return PlaceParts(name = decoded, address = null)
             }
         }
         val q = url.queryParameter("q") ?: url.queryParameter("query")
         if (q != null && CoordinateParsing.parseLatLonPair(q) == null) {
-            return q
+            return PlaceParts(name = q, address = null)
         }
         return null
     }
