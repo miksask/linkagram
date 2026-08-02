@@ -45,6 +45,7 @@ class RedirectResolverTest {
 
         val success = result as ResolveResult.Success
         assertEquals(server.url("/final").toString(), success.finalUrl)
+        assertEquals(200, success.finalStatusCode)
         assertTrue(success.redirectChain.isEmpty())
     }
 
@@ -66,6 +67,7 @@ class RedirectResolverTest {
 
         val success = result as ResolveResult.Success
         assertEquals(server.url("/final").toString(), success.finalUrl)
+        assertEquals(200, success.finalStatusCode)
         assertEquals(2, success.redirectChain.size)
         assertEquals(301, success.redirectChain[0].statusCode)
         assertEquals(302, success.redirectChain[1].statusCode)

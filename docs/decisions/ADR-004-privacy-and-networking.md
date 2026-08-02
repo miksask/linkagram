@@ -4,6 +4,11 @@
 
 Accepted
 
+Persistence rule partially superseded by
+[ADR-006](ADR-006-local-analysis-history-storage.md) for opt-in local analysis
+history only. Cleartext, TLS, logging, clipboard, and permission rules below
+remain in force.
+
 ## Context
 
 Linkagram resolves URLs that come from share sheets, VIEW intents, the
@@ -35,7 +40,8 @@ Nothing else about TLS is relaxed:
 Privacy rules that follow from having no backend:
 
 - do not log full user URLs in release builds;
-- do not persist URLs, redirect chains, or coordinates;
+- do not persist URLs, redirect chains, or coordinates except under the opt-in
+  local history rules in Spec 006 / ADR-006;
 - read the clipboard only in response to an explicit user action;
 - request no location, contacts, or storage permissions.
 

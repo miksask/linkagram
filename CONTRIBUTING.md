@@ -71,11 +71,12 @@ prefixes. One logical change per commit. Full rule:
 
 Business logic must be testable on the JVM without an emulator. Network tests
 use `MockWebServer`; never call real external hosts, including real URL
-shorteners.
+shorteners. History persistence tests use fake DAO / settings repositories.
 
 Compose preview screenshot tests live in `app/src/screenshotTest/` and run on
 the host via `./gradlew validateDebugScreenshotTest`. They do not use
-Robolectric or an emulator.
+Robolectric or an emulator. Interactive instrumentation UI tests for Spec 006
+are intentionally deferred.
 
 ## Security
 

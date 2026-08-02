@@ -15,7 +15,8 @@ Linkagram processes untrusted external URLs.
 - Enforce network timeouts.
 - Do not weaken TLS checks or disable hostname verification.
 - Do not print full user URLs in release logs.
-- Do not persist user URL history unless the feature explicitly requires it.
+- Persist user URL history only under Spec 006 / ADR-006 (opt-in local Room
+  history). Exclude history from cloud backup and device transfer.
 - Treat redirect chains as potentially sensitive data.
 - Handle malformed URLs safely; invalid input must not crash the app.
 - Prefer mocked HTTP responses in unit tests; do not call real external hosts.

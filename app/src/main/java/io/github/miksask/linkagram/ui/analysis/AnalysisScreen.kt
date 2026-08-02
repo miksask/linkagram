@@ -13,14 +13,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,10 +37,16 @@ import io.github.miksask.linkagram.ui.theme.LinkagramTheme
 @Composable
 fun AnalysisScreen(
     viewModel: AnalysisViewModel,
+    onHistorySaveNotice: (HistorySaveNotice) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    LaunchedEffect(uiState.historySaveNotice) {
+        val notice = uiState.historySaveNotice ?: return@LaunchedEffect
+        onHistorySaveNotice(notice)
+        viewModel.consumeHistorySaveNotice()
+    }
     AnalysisScreenContent(
         state = uiState,
         onDraftUrlChanged = viewModel::onDraftUrlChanged,
@@ -60,7 +64,6 @@ fun AnalysisScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalysisScreenContent(
     state: AnalysisUiState,
@@ -70,99 +73,95 @@ fun AnalysisScreenContent(
     onCopyCoordinates: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.app_name)) },
-            )
-        },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.app_tagline),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        OutlinedTextField(
+            value = state.draftUrl,
+            onValueChange = onDraftUrlChanged,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(text = stringResource(R.string.url_input_label)) },
+            placeholder = { Text(text = stringResource(R.string.url_input_placeholder)) },
+            singleLine = true,
+            enabled = !state.isAnalyzing,
+            isError = state.validationError != null,
+            supportingText = {
+                state.validationError?.let { error ->
+                    Text(text = stringResource(error.messageRes()))
+                }
+            },
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = stringResource(R.string.app_tagline),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            OutlinedTextField(
-                value = state.draftUrl,
-                onValueChange = onDraftUrlChanged,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = stringResource(R.string.url_input_label)) },
-                placeholder = { Text(text = stringResource(R.string.url_input_placeholder)) },
-                singleLine = true,
+            OutlinedButton(
+                onClick = onPasteFromClipboard,
+                modifier = Modifier.weight(1f),
                 enabled = !state.isAnalyzing,
-                isError = state.validationError != null,
-                supportingText = {
-                    state.validationError?.let { error ->
-                        Text(text = stringResource(error.messageRes()))
-                    }
-                },
-            )
+            ) {
+                Text(text = stringResource(R.string.paste_from_clipboard))
+            }
+            Button(
+                onClick = onAnalyze,
+                modifier = Modifier.weight(1f),
+                enabled = !state.isAnalyzing,
+            ) {
+                Text(text = stringResource(R.string.analyze))
+            }
+        }
+        if (state.isAnalyzing) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                OutlinedButton(
-                    onClick = onPasteFromClipboard,
-                    modifier = Modifier.weight(1f),
-                    enabled = !state.isAnalyzing,
-                ) {
-                    Text(text = stringResource(R.string.paste_from_clipboard))
-                }
-                Button(
-                    onClick = onAnalyze,
-                    modifier = Modifier.weight(1f),
-                    enabled = !state.isAnalyzing,
-                ) {
-                    Text(text = stringResource(R.string.analyze))
-                }
+                CircularProgressIndicator()
+                Text(text = stringResource(R.string.analyzing))
             }
-            if (state.isAnalyzing) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    CircularProgressIndicator()
-                    Text(text = stringResource(R.string.analyzing))
-                }
-            }
-            state.resolveError?.let { error ->
-                Text(
-                    text = stringResource(error.messageRes()),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            state.finalUrl?.let { url ->
-                ResultSection(
-                    title = stringResource(R.string.final_url_label),
-                    body = url,
-                )
-            }
-            state.location?.let { location ->
-                LocationSection(
-                    location = location,
-                    coordinatesText = state.coordinatesText,
-                    coordinatesCopied = state.coordinatesCopied,
-                    onCopyCoordinates = onCopyCoordinates,
-                )
-            }
-            if (state.redirectChain.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.redirect_chain_label),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                state.redirectChain.forEachIndexed { index, step ->
-                    RedirectStepRow(index = index + 1, step = step)
-                }
+        }
+        state.resolveError?.let { error ->
+            Text(
+                text = stringResource(error.messageRes()),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        state.finalUrl?.let { url ->
+            ResultSection(
+                title = stringResource(R.string.final_url_label),
+                body = url,
+            )
+        }
+        state.finalStatusCode?.let { code ->
+            Text(
+                text = stringResource(R.string.final_status_label, code),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        state.location?.let { location ->
+            LocationSection(
+                location = location,
+                coordinatesText = state.coordinatesText,
+                coordinatesCopied = state.coordinatesCopied,
+                onCopyCoordinates = onCopyCoordinates,
+            )
+        }
+        if (state.redirectChain.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.redirect_chain_label),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            state.redirectChain.forEachIndexed { index, step ->
+                RedirectStepRow(index = index + 1, step = step)
             }
         }
     }
@@ -278,6 +277,7 @@ private fun AnalysisScreenPreview() {
             state = AnalysisUiState(
                 draftUrl = "https://maps.example/place",
                 finalUrl = "https://maps.example/place",
+                finalStatusCode = 200,
                 location = LocationInfo(
                     provider = MapProvider.Generic,
                     latitude = 55.75,

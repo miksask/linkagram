@@ -1,7 +1,10 @@
 package io.github.miksask.linkagram.core.url
 
 sealed interface UrlNormalizationResult {
-    data class NormalizedUrl(val url: String) : UrlNormalizationResult
+    data class NormalizedUrl(
+        val sourceUrl: String,
+        val normalizedUrl: String,
+    ) : UrlNormalizationResult
 
     data class InvalidUrl(val reason: InvalidUrlReason) : UrlNormalizationResult
 }
@@ -74,7 +77,10 @@ object UrlNormalizer {
             }
             // Rebuild without rewriting path/query/fragment beyond URI parsing.
             val normalized = uri.toASCIIString()
-            UrlNormalizationResult.NormalizedUrl(normalized)
+            UrlNormalizationResult.NormalizedUrl(
+                sourceUrl = candidate,
+                normalizedUrl = normalized,
+            )
         } catch (_: Exception) {
             UrlNormalizationResult.InvalidUrl(InvalidUrlReason.Malformed)
         }

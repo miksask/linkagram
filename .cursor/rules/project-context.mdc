@@ -11,8 +11,11 @@ coordinates from map links. Public demo of AI-assisted development. No backend.
 - Canonical instructions: `AGENTS.md`. Behaviour is specified in `docs/specs/`;
   decisions in `docs/decisions/`. A spec wins over this rule.
 - Before changing behaviour, read the matching spec. If none exists, write it.
-- Do not add: backend, accounts, analytics, ads, database, persistent history,
-  WebView, JavaScript execution, Maps SDK, route building, location
-  permissions, DI framework, extra Gradle modules.
+- Do not add: backend, accounts, analytics, ads, cloud sync, WebView,
+  JavaScript execution, Maps SDK, route building, location permissions, DI
+  framework, extra Gradle modules.
+- Optional local analysis history (Spec 006 / ADR-006) is in scope: Room +
+  DataStore on device, off by default. Do not invent other persistence.
 - Single module `:app`; boundaries are `core/`, `data/`, `domain/`, `ui/`.
 - Add an abstraction only when something in the code needs it today.
+  `HistoryRepository` is that concrete need for Spec 006.

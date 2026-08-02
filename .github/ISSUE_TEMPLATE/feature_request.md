@@ -13,9 +13,10 @@ labels: enhancement
 
 ## Why it fits the project
 
-Linkagram deliberately excludes backends, accounts, analytics, databases,
-persistent history, WebView, and Maps SDK rendering. See the non-goals in
-[`AGENTS.md`](../../AGENTS.md). Explain how this request fits within them.
+Linkagram deliberately excludes backends, accounts, analytics, cloud sync,
+WebView, and Maps SDK rendering. Opt-in local history is covered by Spec 006.
+See the non-goals in [`AGENTS.md`](../../AGENTS.md). Explain how this request
+fits within them.
 
 ## Example URLs
 

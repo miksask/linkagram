@@ -16,8 +16,11 @@ alwaysApply: false
 - Name tests `subject_condition_expectedResult`.
 - Cover at minimum: URL normalization, redirect limit, redirect loops,
   unsupported schemes, malformed `Location` headers, cancellation, provider
-  detection, coordinate extraction, invalid coordinates, `lat, lon` formatting.
+  detection, coordinate extraction, invalid coordinates, `lat, lon` formatting,
+  history save gating, search/date query helpers, delete/restore/prune.
 - Assert on sealed result types rather than on nullable fields.
+- Prefer fake DAO / settings repositories for history tests. Do not add
+  Robolectric or emulator Room tests unless Spec 006 / ADR-006 are updated.
 
 # Screenshot tests
 

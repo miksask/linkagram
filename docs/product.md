@@ -49,6 +49,18 @@ Expected result:
 - Latitude and longitude, if extractable.
 - One-tap coordinate copy in `lat, lon` format.
 
+### 5. Browse local analysis history
+
+A user who opts in can reopen previous successful analyses on the same device.
+
+Expected result:
+- Setting **Save analysis history** is off by default.
+- When on, each successful analysis is stored locally with no confirmation.
+- History list supports search, date filters, reopen without network, delete,
+  undo for single delete, and clear / delete-matching with confirmation.
+- Failed or incomplete analyses are never stored.
+- History is never synced to a backend or cloud backup.
+
 ## Supported providers: initial target
 
 - Google Maps
@@ -65,6 +77,7 @@ and redirect chain.
 - No accounts.
 - No analytics by default.
 - No backend.
-- No persistent URL history in MVP.
+- Optional local analysis history only (off by default); excluded from cloud
+  backup and device transfer. See Spec 006 and ADR-006.
 - No location permission required.
 - The app only accesses URLs explicitly shared, pasted, or entered by the user.

@@ -113,6 +113,7 @@ fun AnalysisScreenLongUrlPreview() {
             state = AnalysisUiState(
                 draftUrl = longUrl,
                 finalUrl = longUrl,
+                finalStatusCode = 200,
                 redirectChain = listOf(
                     RedirectStep(
                         fromUrl = "https://short.example/long",
@@ -151,6 +152,7 @@ fun AnalysisScreenSuccessDarkPreview() {
 private fun successState(): AnalysisUiState = AnalysisUiState(
     draftUrl = "https://maps.app.goo.gl/example",
     finalUrl = "https://www.google.com/maps/@55.755826,37.617300,17z",
+    finalStatusCode = 200,
     redirectChain = listOf(
         RedirectStep(
             fromUrl = "https://maps.app.goo.gl/example",

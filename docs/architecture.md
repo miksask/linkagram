@@ -7,15 +7,22 @@ one module is in [ADR-001](decisions/ADR-001-android-project-structure.md).
 
 ```text
 io.github.miksask.linkagram/
+├── LinkagramApplication / AppContainer
 ├── core/
-│   ├── clipboard/   ClipboardUrlReader — reads text from the system clipboard
-│   └── url/         UrlNormalizer, UrlExtractor — pure JVM URL handling
+│   ├── clipboard/   ClipboardUrlReader
+│   ├── time/        HistoryDateRangeCalculator
+│   └── url/         UrlNormalizer, UrlExtractor, SearchNormalizer
 ├── data/
+│   ├── history/     Room DB, DAO, HistoryRepository, DataStore settings
 │   ├── maps/        MapUrlParser + one parser per provider
 │   └── resolver/    RedirectResolver — manual HTTP redirect following
-├── domain/          LocationInfo, ResolveResult, MapParseResult, formatters
+├── domain/          LocationInfo, ResolveResult, HistoryEntry, formatters
 └── ui/
-    ├── analysis/    AnalysisScreen, AnalysisViewModel, AnalysisUiState
+    ├── analysis/    AnalysisScreen, AnalysisViewModel
+    ├── history/     HistoryScreen, HistoryDetailsScreen, ViewModels
+    ├── settings/    SettingsScreen, SettingsViewModel
+    ├── navigation/  Destinations
+    ├── common/      UrlDisplay helpers
     └── theme/       Material 3 colour scheme
 ```
 
@@ -25,49 +32,56 @@ io.github.miksask.linkagram/
 flowchart TD
     Share["ACTION_SEND"] --> Extractor
     View["ACTION_VIEW"] --> Extractor
-    Clipboard["Clipboard"] --> ViewModel
-    Manual["Manual input"] --> ViewModel
-    Extractor["UrlExtractor"] --> ViewModel
-    ViewModel["AnalysisViewModel"] --> Normalizer["UrlNormalizer"]
-    Normalizer -->|"InvalidUrl"| State["AnalysisUiState"]
+    Clipboard["Clipboard"] --> AnalysisVM
+    Manual["Manual input"] --> AnalysisVM
+    Extractor["UrlExtractor"] --> AnalysisVM
+    AnalysisVM["AnalysisViewModel"] --> Normalizer["UrlNormalizer"]
+    Normalizer -->|"InvalidUrl"| AnalysisState["AnalysisUiState"]
     Normalizer -->|"NormalizedUrl"| Resolver["RedirectResolver"]
     Resolver -->|"ResolveResult"| Parser["MapUrlParser"]
-    Parser --> State
-    State --> Screen["AnalysisScreen"]
+    Parser --> AnalysisState
+    Parser -->|"Success snapshot"| HistoryRepo["HistoryRepository"]
+    HistoryRepo --> RoomDB["Room + DataStore"]
+    HistoryRepo --> HistoryVM["HistoryViewModel"]
+    HistoryRepo --> SettingsVM["SettingsViewModel"]
+    AnalysisState --> Screen["LinkagramApp NavHost"]
+    HistoryVM --> Screen
+    SettingsVM --> Screen
 ```
 
 ## Rules
 
-- The UI layer contains no URL processing logic; it renders `AnalysisUiState`.
-- `RedirectResolver` and the map parsers do not depend on Compose or Android
-  UI types, so they are unit-testable on the JVM.
+- The UI layer contains no URL processing or SQL; it renders immutable UI state.
+- `RedirectResolver`, map parsers, and history date/search helpers stay free of
+  Compose so they are unit-testable on the JVM.
 - Map parsers never perform network requests. They parse the final URL only.
-- Provider-specific parsing lives in one class per provider under `data/maps/`.
-- Results and errors are sealed types (`ResolveResult`, `MapParseResult`,
-  `UrlNormalizationResult`) rather than nullable values.
-- `AnalysisUiState` is an immutable data class exposed through `StateFlow`.
-- Network work runs off the main thread and is cancellation-aware: cancelling
-  the analysis coroutine cancels the in-flight OkHttp call.
+- `HistoryRepository` / `HistorySettingsRepository` are the only justified
+  data-access seams for Spec 006. No DI framework; `AppContainer` holds
+  singletons and ViewModel factories.
+- Results and errors are sealed types rather than nullable values.
+- Network and database work run off the main thread.
 
 ## Dependency seams
-
-`AnalysisViewModel` takes its collaborators as constructor parameters with
-production defaults:
 
 ```kotlin
 class AnalysisViewModel(
     private val resolveUrl: suspend (String) -> ResolveResult = RedirectResolver()::resolve,
     private val mapUrlParser: MapUrlParser = MapUrlParser(),
+    private val historyRepository: HistoryRepository? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 )
 ```
 
-Tests substitute a fake resolver and a test dispatcher. This is deliberate in
-place of a DI framework, which the project does not need at this size.
+Production wiring uses `LinkagramApplication.container` and ViewModel
+`Factory` classes. Tests substitute fakes and test dispatchers.
 
-## Networking
+## Networking and persistence
 
-One `OkHttpClient` per resolver instance, with automatic redirects disabled and
-connect/read/call timeouts. See [ADR-002](decisions/ADR-002-url-resolution.md),
+One `OkHttpClient` per resolver instance, with automatic redirects disabled.
+See [ADR-002](decisions/ADR-002-url-resolution.md),
 [ADR-003](decisions/ADR-003-http-client.md), and
 [ADR-004](decisions/ADR-004-privacy-and-networking.md).
+
+Local history uses Room 2.8.4 + Preferences DataStore; see
+[ADR-006](decisions/ADR-006-local-analysis-history-storage.md). History files are
+excluded from cloud backup and device transfer.

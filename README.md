@@ -28,6 +28,8 @@ Runnable Android/Compose app with:
 - Map URL parsing for Google, Yandex, OSM, Apple, and generic coordinates (Spec 003)
 - Result presentation for Spec 004 states (idle, analyzing, errors, location)
 - One-tap copy of coordinates as `lat, lon` (Spec 005)
+- Opt-in local analysis history with search, date filters, and delete/undo
+  (Spec 006 / ADR-006); off by default, Room + DataStore, excluded from backup
 - Host-side Compose preview screenshot tests (ADR-005)
 - Unit tests and GitHub Actions CI (`test`, `lint`, `validateDebugScreenshotTest`,
   `assembleDebug`), with screenshot reports and the debug APK uploaded as artifacts
@@ -56,6 +58,7 @@ constraints, specifications, reviews, tests, and architecture remain explicit.
 - Resolve short links and show redirect hops with status codes
 - Detect map links and extract coordinates / available place metadata
 - Copy `latitude, longitude` in one tap
+- Optional on-device history of successful analyses (search, date filters, delete)
 
 ## Build and test
 
@@ -126,20 +129,27 @@ Typical agent loop:
 
 ## Privacy
 
-No backend, no accounts, no analytics, no database. The only network traffic is
-the resolution of the URL you supply. The clipboard is read only when you tap
-paste. Nothing is persisted between runs.
+No backend, no accounts, no analytics, no cloud sync. The only network traffic
+is the resolution of the URL you supply. The clipboard is read only when you
+tap paste.
+
+Optional local analysis history (off by default) stores successful results in
+Room on the device. History and its setting are excluded from Android cloud
+backup and device transfer. See
+[ADR-004](docs/decisions/ADR-004-privacy-and-networking.md) and
+[ADR-006](docs/decisions/ADR-006-local-analysis-history-storage.md).
 
 Cleartext `http://` is allowed on purpose so plain http links can be inspected
-instead of failing; TLS validation for https is untouched. See
-[ADR-004](docs/decisions/ADR-004-privacy-and-networking.md).
+instead of failing; TLS validation for https is untouched.
 
 ## Current limitations
 
 - JavaScript-only redirects are not followed (no WebView)
 - Map metadata depends on stable URL structure, not page scraping
 - Not every provider URL variant is covered yet
-- No persistent link history in MVP
+- History is opt-in, local-only, capped at 5 000 rows; no export/sync
+- Interactive emulator UI tests for history are deferred (host-side unit +
+  screenshot tests cover Spec 006 in CI)
 - Screenshot tests capture Compose previews only (no clicks or scrolls); see
   [ADR-005](docs/decisions/ADR-005-screenshot-testing.md) for when Roborazzi
   would be worth switching to

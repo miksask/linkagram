@@ -9,6 +9,7 @@ data class RedirectStep(
 sealed interface ResolveResult {
     data class Success(
         val finalUrl: String,
+        val finalStatusCode: Int,
         val redirectChain: List<RedirectStep>,
     ) : ResolveResult
 

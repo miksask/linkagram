@@ -1,17 +1,22 @@
 package io.github.miksask.linkagram.ui.analysis
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.github.miksask.linkagram.core.url.InvalidUrlReason
 import io.github.miksask.linkagram.core.url.UrlNormalizationResult
 import io.github.miksask.linkagram.core.url.UrlNormalizer
+import io.github.miksask.linkagram.data.history.HistoryRepository
 import io.github.miksask.linkagram.data.maps.MapUrlParser
 import io.github.miksask.linkagram.data.resolver.RedirectResolver
+import io.github.miksask.linkagram.domain.CompletedAnalysis
 import io.github.miksask.linkagram.domain.CoordinateFormatter
+import io.github.miksask.linkagram.domain.HistorySaveResult
 import io.github.miksask.linkagram.domain.LocationInfo
 import io.github.miksask.linkagram.domain.MapParseResult
 import io.github.miksask.linkagram.domain.RedirectStep
 import io.github.miksask.linkagram.domain.ResolveResult
+import java.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,8 +29,10 @@ import kotlinx.coroutines.withContext
 
 data class AnalysisUiState(
     val draftUrl: String = "",
+    val sourceUrl: String? = null,
     val normalizedUrl: String? = null,
     val finalUrl: String? = null,
+    val finalStatusCode: Int? = null,
     val redirectChain: List<RedirectStep> = emptyList(),
     val location: LocationInfo? = null,
     val coordinatesText: String? = null,
@@ -33,6 +40,7 @@ data class AnalysisUiState(
     val validationError: ValidationError? = null,
     val resolveError: ResolveError? = null,
     val isAnalyzing: Boolean = false,
+    val historySaveNotice: HistorySaveNotice? = null,
 )
 
 enum class ValidationError {
@@ -52,9 +60,16 @@ enum class ResolveError {
     Unknown,
 }
 
+enum class HistorySaveNotice {
+    Saved,
+    SaveFailed,
+}
+
 class AnalysisViewModel(
     private val resolveUrl: suspend (String) -> ResolveResult = RedirectResolver()::resolve,
     private val mapUrlParser: MapUrlParser = MapUrlParser(),
+    private val historyRepository: HistoryRepository? = null,
+    private val clock: Clock = Clock.systemDefaultZone(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AnalysisUiState())
@@ -94,16 +109,21 @@ class AnalysisViewModel(
             is UrlNormalizationResult.NormalizedUrl -> {
                 _uiState.update {
                     clearResults(it).copy(
-                        draftUrl = normalized.url,
-                        normalizedUrl = normalized.url,
+                        draftUrl = normalized.normalizedUrl,
+                        sourceUrl = normalized.sourceUrl,
+                        normalizedUrl = normalized.normalizedUrl,
                         isAnalyzing = true,
                     )
                 }
                 analyzeJob = viewModelScope.launch {
                     val result = withContext(ioDispatcher) {
-                        resolveUrl(normalized.url)
+                        resolveUrl(normalized.normalizedUrl)
                     }
-                    applyResolveResult(result)
+                    applyResolveResult(
+                        result = result,
+                        sourceUrl = normalized.sourceUrl,
+                        normalizedUrl = normalized.normalizedUrl,
+                    )
                 }
             }
         }
@@ -113,7 +133,15 @@ class AnalysisViewModel(
         _uiState.update { it.copy(coordinatesCopied = true) }
     }
 
-    private fun applyResolveResult(result: ResolveResult) {
+    fun consumeHistorySaveNotice() {
+        _uiState.update { it.copy(historySaveNotice = null) }
+    }
+
+    private suspend fun applyResolveResult(
+        result: ResolveResult,
+        sourceUrl: String,
+        normalizedUrl: String,
+    ) {
         when (result) {
             is ResolveResult.Success -> {
                 val parsed = mapUrlParser.parse(result.finalUrl)
@@ -122,6 +150,7 @@ class AnalysisViewModel(
                     it.copy(
                         isAnalyzing = false,
                         finalUrl = result.finalUrl,
+                        finalStatusCode = result.finalStatusCode,
                         redirectChain = result.redirectChain,
                         resolveError = null,
                         location = location,
@@ -129,6 +158,17 @@ class AnalysisViewModel(
                         coordinatesCopied = false,
                     )
                 }
+                maybeSaveHistory(
+                    CompletedAnalysis(
+                        sourceUrl = sourceUrl,
+                        normalizedUrl = normalizedUrl,
+                        finalUrl = result.finalUrl,
+                        finalStatusCode = result.finalStatusCode,
+                        redirectChain = result.redirectChain,
+                        location = location,
+                        completedAtMillis = clock.millis(),
+                    ),
+                )
             }
             ResolveResult.InvalidInput -> {
                 _uiState.update {
@@ -179,6 +219,7 @@ class AnalysisViewModel(
                     it.copy(
                         isAnalyzing = false,
                         finalUrl = result.url,
+                        finalStatusCode = result.statusCode,
                         redirectChain = result.redirectChain,
                         resolveError = ResolveError.Http,
                         location = location,
@@ -194,16 +235,32 @@ class AnalysisViewModel(
         }
     }
 
+    private suspend fun maybeSaveHistory(analysis: CompletedAnalysis) {
+        val repository = historyRepository ?: return
+        when (repository.saveIfEnabled(analysis)) {
+            is HistorySaveResult.Saved -> {
+                _uiState.update { it.copy(historySaveNotice = HistorySaveNotice.Saved) }
+            }
+            HistorySaveResult.SkippedDisabled -> Unit
+            is HistorySaveResult.Failed -> {
+                _uiState.update { it.copy(historySaveNotice = HistorySaveNotice.SaveFailed) }
+            }
+        }
+    }
+
     private fun clearResults(state: AnalysisUiState): AnalysisUiState =
         state.copy(
             validationError = null,
             resolveError = null,
+            sourceUrl = null,
             normalizedUrl = null,
             finalUrl = null,
+            finalStatusCode = null,
             redirectChain = emptyList(),
             location = null,
             coordinatesText = null,
             coordinatesCopied = false,
+            historySaveNotice = null,
         )
 
     private fun LocationInfo.toCoordinatesText(): String? {
@@ -217,5 +274,23 @@ class AnalysisViewModel(
         InvalidUrlReason.Malformed -> ValidationError.Malformed
         InvalidUrlReason.UnsupportedScheme -> ValidationError.UnsupportedScheme
         InvalidUrlReason.NoUrlFound -> ValidationError.NoUrlFound
+    }
+
+    class Factory(
+        private val resolveUrl: suspend (String) -> ResolveResult,
+        private val mapUrlParser: MapUrlParser,
+        private val historyRepository: HistoryRepository,
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(AnalysisViewModel::class.java)) {
+                return AnalysisViewModel(
+                    resolveUrl = resolveUrl,
+                    mapUrlParser = mapUrlParser,
+                    historyRepository = historyRepository,
+                ) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
+        }
     }
 }

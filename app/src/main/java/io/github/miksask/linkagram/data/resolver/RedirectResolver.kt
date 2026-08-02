@@ -86,6 +86,7 @@ class RedirectResolver(
                     if (code in 200..299) {
                         return ResolveResult.Success(
                             finalUrl = currentString,
+                            finalStatusCode = code,
                             redirectChain = chain.toList(),
                         )
                     }

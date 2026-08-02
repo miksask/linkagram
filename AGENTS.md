@@ -60,13 +60,17 @@ Do not add these unless explicitly requested:
 - Analytics
 - Advertising
 - Backend services
-- Database persistence
+- Cloud sync / export-import of history
 - Maps SDK rendering
-- Route building/navigation
+- Route building/navigation (map routing, not in-app screen navigation)
 - WebView-based URL loading
 - Background tracking
 - Contact/location permissions
 - Over-engineered multi-module architecture
+- DI frameworks (Hilt/Koin)
+
+Optional local analysis history (Spec 006) is in scope: Room + DataStore,
+off by default, never backed up to the cloud.
 
 ## Technology constraints
 
@@ -85,12 +89,13 @@ Do not add these unless explicitly requested:
 Use a simple layered architecture:
 
 - `ui/`: Compose screens, UI state, ViewModels
-- `domain/`: use cases and domain models
-- `data/`: HTTP resolving, URL parsing, provider parsers
+- `domain/`: domain models (including history snapshots)
+- `data/`: HTTP resolving, URL parsing, provider parsers, history storage
 - `core/`: shared utilities
 
 Do not introduce repositories, use cases, DI frameworks, or abstractions merely
-for theoretical purity. Add an abstraction only when it has a concrete use.
+for theoretical purity. `HistoryRepository` / `HistorySettingsRepository` exist
+because Spec 006 needs a single data-access seam for multiple screens.
 
 ## Networking and security (summary)
 

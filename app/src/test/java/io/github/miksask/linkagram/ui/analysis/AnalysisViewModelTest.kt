@@ -1,15 +1,25 @@
 package io.github.miksask.linkagram.ui.analysis
 
+import io.github.miksask.linkagram.data.history.HistoryDao
+import io.github.miksask.linkagram.data.history.HistoryEntryEntity
+import io.github.miksask.linkagram.data.history.HistoryRedirectEntity
+import io.github.miksask.linkagram.data.history.HistoryRepository
+import io.github.miksask.linkagram.data.history.HistorySettingsRepository
 import io.github.miksask.linkagram.domain.ResolveResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -66,6 +76,7 @@ class AnalysisViewModelTest {
                 resolveUrl = {
                     ResolveResult.Success(
                         finalUrl = "https://example.com/path",
+                        finalStatusCode = 200,
                         redirectChain = emptyList(),
                     )
                 },
@@ -77,6 +88,8 @@ class AnalysisViewModelTest {
             advanceUntilIdle()
 
             assertEquals("https://example.com/path", viewModel.uiState.value.finalUrl)
+            assertEquals(200, viewModel.uiState.value.finalStatusCode)
+            assertEquals("example.com/path", viewModel.uiState.value.sourceUrl)
             assertNull(viewModel.uiState.value.validationError)
             assertNull(viewModel.uiState.value.resolveError)
         } finally {
@@ -93,6 +106,7 @@ class AnalysisViewModelTest {
                 resolveUrl = {
                     ResolveResult.Success(
                         finalUrl = "https://www.google.com/maps/@55.75,37.62,14z",
+                        finalStatusCode = 200,
                         redirectChain = emptyList(),
                     )
                 },
@@ -105,6 +119,102 @@ class AnalysisViewModelTest {
 
             assertEquals("55.75, 37.62", viewModel.uiState.value.coordinatesText)
             assertEquals(55.75, viewModel.uiState.value.location?.latitude)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun analyze_success_withHistoryEnabled_savesEntry() = runTest {
+        val dispatcher = UnconfinedTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dao = FakeHistoryDao()
+            val repository = HistoryRepository(
+                dao = dao,
+                settings = FakeHistorySettings(enabled = true),
+                ioDispatcher = dispatcher,
+            )
+            val viewModel = AnalysisViewModel(
+                resolveUrl = {
+                    ResolveResult.Success(
+                        finalUrl = "https://example.com/final",
+                        finalStatusCode = 200,
+                        redirectChain = emptyList(),
+                    )
+                },
+                historyRepository = repository,
+                ioDispatcher = dispatcher,
+            )
+            viewModel.onDraftUrlChanged("https://example.com")
+
+            viewModel.analyze()
+            advanceUntilIdle()
+
+            assertEquals(1, dao.entries.size)
+            assertEquals(HistorySaveNotice.Saved, viewModel.uiState.value.historySaveNotice)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun analyze_success_withHistoryDisabled_doesNotSave() = runTest {
+        val dispatcher = UnconfinedTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dao = FakeHistoryDao()
+            val repository = HistoryRepository(
+                dao = dao,
+                settings = FakeHistorySettings(enabled = false),
+                ioDispatcher = dispatcher,
+            )
+            val viewModel = AnalysisViewModel(
+                resolveUrl = {
+                    ResolveResult.Success(
+                        finalUrl = "https://example.com/final",
+                        finalStatusCode = 200,
+                        redirectChain = emptyList(),
+                    )
+                },
+                historyRepository = repository,
+                ioDispatcher = dispatcher,
+            )
+            viewModel.onDraftUrlChanged("https://example.com")
+
+            viewModel.analyze()
+            advanceUntilIdle()
+
+            assertTrue(dao.entries.isEmpty())
+            assertNull(viewModel.uiState.value.historySaveNotice)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun analyze_timeout_doesNotSave() = runTest {
+        val dispatcher = UnconfinedTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dao = FakeHistoryDao()
+            val repository = HistoryRepository(
+                dao = dao,
+                settings = FakeHistorySettings(enabled = true),
+                ioDispatcher = dispatcher,
+            )
+            val viewModel = AnalysisViewModel(
+                resolveUrl = { ResolveResult.Timeout },
+                historyRepository = repository,
+                ioDispatcher = dispatcher,
+            )
+            viewModel.onDraftUrlChanged("https://example.com")
+
+            viewModel.analyze()
+            advanceUntilIdle()
+
+            assertTrue(dao.entries.isEmpty())
+            assertEquals(ResolveError.Timeout, viewModel.uiState.value.resolveError)
         } finally {
             Dispatchers.resetMain()
         }
@@ -153,4 +263,69 @@ class AnalysisViewModelTest {
             Dispatchers.resetMain()
         }
     }
+}
+
+private class FakeHistorySettings(
+    enabled: Boolean,
+) : HistorySettingsRepository {
+    private val enabledFlow = MutableStateFlow(enabled)
+    override val historyEnabled: Flow<Boolean> = enabledFlow
+    override suspend fun isHistoryEnabled(): Boolean = enabledFlow.value
+    override suspend fun setHistoryEnabled(enabled: Boolean) {
+        enabledFlow.value = enabled
+    }
+}
+
+private class FakeHistoryDao : HistoryDao {
+    val entries = linkedMapOf<String, HistoryEntryEntity>()
+    val redirects = mutableListOf<HistoryRedirectEntity>()
+
+    override suspend fun insertEntry(entry: HistoryEntryEntity) {
+        entries[entry.id] = entry
+    }
+
+    override suspend fun insertRedirects(redirects: List<HistoryRedirectEntity>) {
+        this.redirects += redirects
+    }
+
+    override suspend fun countAll(): Int = entries.size
+
+    override suspend fun deleteOldest(count: Int): Int {
+        val toRemove = entries.values.sortedBy { it.completedAtMillis }.take(count)
+        toRemove.forEach { entries.remove(it.id) }
+        return toRemove.size
+    }
+
+    override fun observeMatching(
+        likePattern: String?,
+        startInclusiveMillis: Long?,
+        endExclusiveMillis: Long?,
+    ): Flow<List<HistoryEntryEntity>> = flowOf(entries.values.toList())
+
+    override fun observeMatchingCount(
+        likePattern: String?,
+        startInclusiveMillis: Long?,
+        endExclusiveMillis: Long?,
+    ): Flow<Int> = flowOf(entries.size)
+
+    override suspend fun getEntry(id: String): HistoryEntryEntity? = entries[id]
+
+    override suspend fun getRedirects(historyEntryId: String): List<HistoryRedirectEntity> =
+        redirects.filter { it.historyEntryId == historyEntryId }
+
+    override suspend fun deleteById(id: String): Int =
+        if (entries.remove(id) != null) 1 else 0
+
+    override suspend fun deleteAll(): Int {
+        val size = entries.size
+        entries.clear()
+        redirects.clear()
+        return size
+    }
+
+    override suspend fun deleteMatching(
+        likePattern: String?,
+        startInclusiveMillis: Long?,
+        endExclusiveMillis: Long?,
+    ): Int = deleteAll()
 }
