@@ -1,6 +1,6 @@
 ---
 name: map-url-parser
-description: Adds or changes map URL parsers for Google Maps, Yandex Maps, OpenStreetMap, Apple Maps, or generic coordinate URLs. Use when implementing provider parsing, extracting coordinates, or documenting supported URL patterns.
+description: Adds or changes map URL parsers for Google Maps, Yandex Maps, OpenStreetMap, Apple Maps, Organic Maps, or generic coordinate URLs. Use when implementing provider parsing, extracting coordinates, or documenting supported URL patterns.
 ---
 
 # URL Parser Implementation

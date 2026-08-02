@@ -5,6 +5,7 @@ enum class MapProvider {
     YandexMaps,
     OpenStreetMap,
     AppleMaps,
+    OrganicMaps,
     Generic,
 }
 

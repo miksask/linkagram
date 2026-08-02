@@ -9,6 +9,7 @@ class MapUrlParser {
         YandexMapsParser,
         OpenStreetMapParser,
         AppleMapsParser,
+        OrganicMapsParser,
         GenericCoordinateParser,
     )
 

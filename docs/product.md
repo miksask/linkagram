@@ -67,6 +67,7 @@ Expected result:
 - Yandex Maps
 - OpenStreetMap
 - Apple Maps links, when parseable
+- Organic Maps (`omaps.app` share and map links)
 - Generic URLs containing explicit coordinates
 
 Support should be incremental. Unsupported map URLs must still display the final URL

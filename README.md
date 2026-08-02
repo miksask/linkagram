@@ -29,7 +29,8 @@ Runnable Android/Compose app with:
 - URL intake from Share (`ACTION_SEND`), VIEW intents, clipboard, and manual input
 - URL validation and normalization (Spec 001)
 - Manual HTTP redirect resolution with chain display (Spec 002)
-- Map URL parsing for Google, Yandex, OSM, Apple, and generic coordinates (Spec 003),
+- Map URL parsing for Google, Yandex, OSM, Apple, Organic Maps, and generic
+  coordinates (Spec 003),
   including Google `!3d/!4d` place pins after short-link resolution
 - Result presentation for Spec 004 states (idle, analyzing, errors, location)
 - One-tap copy of coordinates as `lat, lon` (Spec 005)

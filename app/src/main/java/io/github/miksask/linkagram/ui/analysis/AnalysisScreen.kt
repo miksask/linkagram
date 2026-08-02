@@ -300,6 +300,7 @@ private fun MapProvider.displayName(): String = when (this) {
     MapProvider.YandexMaps -> "Yandex Maps"
     MapProvider.OpenStreetMap -> "OpenStreetMap"
     MapProvider.AppleMaps -> "Apple Maps"
+    MapProvider.OrganicMaps -> "Organic Maps"
     MapProvider.Generic -> "Generic"
 }
 
