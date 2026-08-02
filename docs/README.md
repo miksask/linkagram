@@ -33,7 +33,7 @@ Index of product docs, specs, and architecture decisions.
 | [decisions/ADR-004-privacy-and-networking.md](decisions/ADR-004-privacy-and-networking.md) | Accepted — cleartext allowed, TLS untouched; persistence carve-out in ADR-006 |
 | [decisions/ADR-005-screenshot-testing.md](decisions/ADR-005-screenshot-testing.md) | Accepted — Compose Preview Screenshot Testing |
 | [decisions/ADR-006-local-analysis-history-storage.md](decisions/ADR-006-local-analysis-history-storage.md) | Accepted — Room + DataStore for local history |
-| [decisions/ADR-007-adaptive-launcher-icon.md](decisions/ADR-007-adaptive-launcher-icon.md) | Accepted — adaptive + monochrome launcher icon |
+| [decisions/ADR-007-adaptive-launcher-icon.md](decisions/ADR-007-adaptive-launcher-icon.md) | Accepted — finished PNG as adaptive foreground |
 
 ## Prompts
 

@@ -9,54 +9,47 @@ Accepted
 Designers supplied a finished 1270×1270 PNG with a baked-in squircle mask, a
 diagonal purple-to-orange gradient, and a ribbon mark. The app previously used a
 temporary blue vector at `@drawable/ic_launcher`. Android 8+ (our `minSdk`)
-expects adaptive icons with separate background and foreground layers; Android
-13+ can also request a monochrome layer for themed icons. Using the finished PNG
-as a single foreground would leave a squircle-inside-mask artifact on circular
-launchers.
+expects adaptive icons with background and foreground layers.
 
-No separate designer layer files were available. Reconstructing background,
-foreground, and monochrome from the flat master is therefore part of the
-integration, not a deferred polish step.
+No separate designer layer files were available. An earlier attempt to
+reconstruct background, foreground, and monochrome from the flat master with
+local image processing produced a visibly poor launcher icon. Shipping the
+finished artwork as-is is preferable to a bad layer split.
 
 ## Decision
 
 1. **Adaptive icon** (`mipmap-anydpi-v26`) with:
-   - reconstructed full-bleed gradient **background** (no outer squircle);
-   - reconstructed RGBA **foreground** mark (ribbon + center dot + soft shadow),
-     padded into the adaptive safe zone.
-2. **Monochrome** silhouette of the mark in `mipmap-anydpi-v33` for themed icons.
+   - solid black **background** (`@color/ic_launcher_background`);
+   - the finished master PNG as **foreground** (resized to 108 dp / 432 px
+     nodpi), including its baked-in squircle.
+2. **No monochrome / themed** layer — without a clean silhouette export, a
+   reconstructed mono mark is not worth shipping.
 3. **Legacy mipmaps** (`mdpi`…`xxxhdpi`) for `ic_launcher` and
-   `ic_launcher_round` as pre-composited fallbacks.
-4. Raster layers live in `drawable-nodpi/`; XML adaptive definitions reference
-   them. Manifest points at `@mipmap/ic_launcher` /
-   `@mipmap/ic_launcher_round`.
-5. Keep the designer master at `docs/images/linkagram-icon.png`. Do not add an
-   ImageMagick/Python runtime or Gradle plugin dependency for icon generation;
-   assets are committed after a one-off local rebuild.
-6. Accept that reconstructed layers may differ slightly from original design
-   source files (edge anti-alias, shadow softness) while matching the supplied
-   master composition.
+   `ic_launcher_round` as simple resizes of the same master.
+4. Manifest points at `@mipmap/ic_launcher` / `@mipmap/ic_launcher_round`.
+5. Keep the designer master at `docs/images/linkagram-icon.png`. Do not add a
+   runtime or Gradle plugin dependency for icon generation; only resize/copy.
+6. Accept **squircle-inside-mask** on circular (and some OEM) launchers as the
+   trade-off for pixel-faithful artwork.
 
 ## Consequences
 
 Advantages:
 
-- System masks apply correctly without a double frame.
-- Themed icons work on Android 13+.
-- Legacy fallbacks cover non-adaptive consumers.
-- Process stays explicit: Spec 007 + this ADR + committed master.
+- Launcher artwork matches the designer deliverable.
+- No lossy layer reconstruction.
+- Legacy fallbacks stay trivial to regenerate.
 
 Trade-offs:
 
-- Layer split is approximate because the source PNG is flat.
-- Regenerating assets requires a local image toolchain; the APK build itself
-  does not.
+- Circular launchers show the baked squircle inside the system circle.
+- No Android 13+ themed icon until designers supply a monochrome asset.
 
 ## Alternatives considered
 
-- **Ship the finished PNG as-is** — rejected; baked squircle conflicts with
-  adaptive masks.
-- **Wait for designer layer exports** — rejected for this iteration; the flat
-  master is enough for a usable adaptive set.
+- **Reconstruct background / foreground / monochrome from the flat PNG** —
+  rejected after on-device review: edges, holes, and gradient ghosts looked
+  worse than squircle-inside-mask.
+- **Wait for designer layer exports** — deferred; as-is unblocks branding now.
 - **Vectorize the mark** — rejected; the 3D ribbon gradients are not a good fit
   for a hand-authored vector in this demo.

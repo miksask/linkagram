@@ -34,8 +34,7 @@ Runnable Android/Compose app with:
 - One-tap copy of coordinates as `lat, lon` (Spec 005)
 - Opt-in local analysis history with search, date filters, and delete/undo
   (Spec 006 / ADR-006); off by default, Room + DataStore, excluded from backup
-- Brand adaptive launcher icon with themed monochrome layer (Spec 007 /
-  ADR-007)
+- Brand adaptive launcher icon from designer artwork (Spec 007 / ADR-007)
 - Host-side Compose preview screenshot tests (ADR-005)
 - Unit tests and GitHub Actions CI (`test`, `lint`, `validateDebugScreenshotTest`,
   `assembleDebug`), with screenshot reports and the debug APK uploaded as artifacts
