@@ -148,3 +148,7 @@ Cleartext `http://` is allowed on purpose so plain http links can be inspected i
 - Interactive emulator UI tests for history are deferred (host-side unit + screenshot tests cover Spec 006 in CI)
 - Screenshot tests capture Compose previews only (no clicks or scrolls); see [ADR-005](docs/decisions/ADR-005-screenshot-testing.md) for when Roborazzi would be worth switching to
 - Release builds are not minified, and are unsigned unless CI secrets are set
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
